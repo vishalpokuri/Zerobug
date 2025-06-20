@@ -14,8 +14,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./App.css";
-import { CustomNode, type CustomNodeData } from "./CustomNode";
-import { PostmanInterface } from "./PostmanInterface";
+import { CustomNode } from "./components/CustomNode";
 
 // Node types configuration
 const nodeTypes = {
@@ -30,19 +29,38 @@ const initialNodes: Node[] = [
       label: "Start Node",
       description: "Starting point of the flow",
       status: "active",
-    } as CustomNodeData,
+      // THIS IS WHERE YOU PASS THE ENDPOINT DATA:
+      endpointData: {
+        method: "GET",
+        url: "/user/existOrCreate/:publicKey",
+        params: ["publicKey"],
+        queryParams: [],
+        bodyParams: [],
+        headers: ["Authorization"],
+        requestDataType: "params",
+      },
+    },
     type: "customNode",
+    style: { width: 900, height: 500 },
   },
   {
     id: "2",
-    position: { x: 0, y: 150 },
+    position: { x: 250, y: 300 },
     data: {
       label: "Process Node",
-      description: "Processing data",
-      status: "pending",
-      count: 42,
-    } as CustomNodeData,
+      // DIFFERENT ENDPOINT DATA FOR DIFFERENT NODES:
+      endpointData: {
+        method: "POST",
+        url: "/api/users",
+        params: [],
+        queryParams: [],
+        bodyParams: ["name", "email", "password"],
+        headers: ["Content-Type", "Authorization"],
+        requestDataType: "body",
+      },
+    },
     type: "customNode",
+    style: { width: 900, height: 500 },
   },
   // {
   //   id: "3",
