@@ -1,4 +1,4 @@
-import { KeyValuePair } from '../hooks/useRequestData';
+import type { KeyValuePair } from "../hooks/useRequestData";
 
 export interface RequestDataActions {
   params: KeyValuePair[];

@@ -1,5 +1,5 @@
 import { Colors } from "../../../types/declarations";
-
+import { ClipLoader } from "react-spinners";
 interface ReqHeaderProps {
   endpointMethod: keyof typeof Colors;
   endpointUrl: string;
@@ -18,19 +18,10 @@ function ReqHeader({
       {/* Request Line */}
       <div className="flex gap-1 items-center">
         <div
-          className={`px-3 py-1.5 text-xs font-semibold rounded text-white ${
-            endpointMethod === "GET"
-              ? `bg-[${Colors.GET}]`
-              : endpointMethod === "POST"
-              ? `bg-[${Colors.POST}]`
-              : endpointMethod === "PUT"
-              ? `bg-[${Colors.PUT}]`
-              : endpointMethod === "DELETE"
-              ? `bg-[${Colors.DELETE}]`
-              : endpointMethod === "PATCH"
-              ? `bg-[${Colors.PATCH}]`
-              : `bg-[${Colors.DEFAULT}]`
-          }`}
+          className="px-3 py-1.5 text-xs font-semibold rounded text-white"
+          style={{
+            backgroundColor: Colors[endpointMethod] || Colors.DEFAULT
+          }}
         >
           {endpointMethod}
         </div>
@@ -43,9 +34,9 @@ function ReqHeader({
         <button
           onClick={handleSendRequestClick}
           disabled={disabledState}
-          className="px-4 py-1.5 bg-[#ff6b35] hover:bg-[#ff8c5a] disabled:bg-[#555] disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+          className="px-4 py-1.5 bg-[#F98866] hover:bg-[#ff8c5a] disabled:bg-[#555] disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
         >
-          {disabledState ? "Sending..." : "Send"}
+          {disabledState ? <ClipLoader size={8} /> : "Send"}
         </button>
       </div>
     </div>

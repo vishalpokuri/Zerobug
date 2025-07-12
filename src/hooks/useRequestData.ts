@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 export interface KeyValuePair {
   key: string;
@@ -6,14 +6,20 @@ export interface KeyValuePair {
   enabled: boolean;
 }
 
+export interface ParameterWithType {
+  name: string;
+  type: string;
+  required?: boolean;
+}
+
 export interface ParsedEndpoint {
   method: string;
   url: string;
-  params: string[];
-  queryParams: string[];
-  bodyParams: string[];
   headers: string[];
   requestDataType: "params" | "query" | "body" | "none";
+  paramTypes: ParameterWithType[];
+  queryParamTypes: ParameterWithType[];
+  bodyParamTypes: ParameterWithType[];
 }
 
 export interface RequestDataState {
@@ -27,37 +33,41 @@ export interface RequestDataState {
 
 export function useRequestData(endpointData: ParsedEndpoint) {
   const [params, setParams] = useState<KeyValuePair[]>(
-    endpointData.params.length > 0
-      ? endpointData.params.map((key) => ({ key, value: "", enabled: true }))
+    endpointData.paramTypes.length > 0
+      ? endpointData.paramTypes.map((param) => ({
+          key: param.name,
+          value: "",
+          enabled: true,
+        }))
       : [{ key: "", value: "", enabled: true }]
   );
-  
+
   const [queryParams, setQueryParams] = useState<KeyValuePair[]>(
-    endpointData.queryParams.length > 0
-      ? endpointData.queryParams.map((key) => ({
-          key,
+    endpointData.queryParamTypes.length > 0
+      ? endpointData.queryParamTypes.map((param) => ({
+          key: param.name,
           value: "",
           enabled: true,
         }))
       : [{ key: "", value: "", enabled: true }]
   );
-  
+
   const [bodyParams, setBodyParams] = useState<KeyValuePair[]>(
-    endpointData.bodyParams.length > 0
-      ? endpointData.bodyParams.map((key) => ({
-          key,
+    endpointData.bodyParamTypes.length > 0
+      ? endpointData.bodyParamTypes.map((param) => ({
+          key: param.name,
           value: "",
           enabled: true,
         }))
       : [{ key: "", value: "", enabled: true }]
   );
-  
+
   const [headers, setHeaders] = useState<KeyValuePair[]>(
     endpointData.headers.length > 0
       ? endpointData.headers.map((key) => ({ key, value: "", enabled: true }))
       : [{ key: "", value: "", enabled: true }]
   );
-  
+
   const [body, setBody] = useState("");
   const [bodyType, setBodyType] = useState("raw");
 

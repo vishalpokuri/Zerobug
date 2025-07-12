@@ -43,7 +43,7 @@ function RequestHeader({
         <button
           onClick={handleSendRequestClick}
           disabled={disabledState}
-          className="px-4 py-1.5 bg-[#ff6b35] hover:bg-[#ff8c5a] disabled:bg-[#555] disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
+          className="px-4 py-1.5 bg-[#F98866] hover:bg-[#ff8c5a] disabled:bg-[#555] disabled:cursor-not-allowed text-white text-sm font-medium transition-colors"
         >
           {disabledState ? "Sending..." : "Send"}
         </button>
