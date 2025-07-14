@@ -1,87 +1,50 @@
-import { useCallback } from "react";
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  type OnConnect,
-  type Node,
-  type Edge,
-  BackgroundVariant,
-  SelectionMode,
-} from "@xyflow/react";
-import "@xyflow/react/dist/style.css";
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { CanvasPage } from './pages/CanvasPage';
+import { GitHubImportPage } from './pages/GitHubImportPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import "./App.css";
-import { CustomNode } from "./components/CustomNode";
-import { BufferNode } from "./components/BufferNode";
-import {
-  mockEndpoints,
-  parseEndpointsToTree,
-  treeToFlowNodes,
-} from "./utils/endpointParser";
-
-import { getNodeColor } from "./utils/utilityFunctions";
-
-// Node types configuration
-const nodeTypes = {
-  customNode: CustomNode,
-  bufferNode: BufferNode,
-};
-
-// Generate nodes and edges from parsed endpoints (TODO: learn how these work)
-const endpointTree = parseEndpointsToTree(mockEndpoints);
-const { nodes: generatedNodes, edges: generatedEdges } =
-  treeToFlowNodes(endpointTree);
-
-const initialNodes: Node[] = generatedNodes;
-const initialEdges: Edge[] = generatedEdges;
 
 function App() {
-  const [nodes, _, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const onConnect: OnConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
-  );
-
   return (
-    <div className="h-screen w-screen bg-[#141414]">
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        panOnScroll
-        selectionMode={SelectionMode.Partial}
-        connectionRadius={25}
-        connectionLineStyle={{
-          stroke: "#F98866",
-          strokeWidth: 2,
-          strokeDasharray: "5,5",
-        }}
-      >
-        <Controls />
-        <MiniMap
-          bgColor="#333"
-          pannable
-          draggable
-          maskColor="#14141499"
-          nodeColor={getNodeColor}
+    <BrowserRouter>
+      <Routes>
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        
+        {/* Protected routes */}
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } 
         />
-        <Background
-          variant={BackgroundVariant.Cross}
-          gap={64}
-          size={0.7}
-          color="#fff"
+        <Route 
+          path="/canvas/:projectId" 
+          element={
+            <ProtectedRoute>
+              <CanvasPage />
+            </ProtectedRoute>
+          } 
         />
-      </ReactFlow>
-    </div>
+        <Route 
+          path="/import" 
+          element={
+            <ProtectedRoute>
+              <GitHubImportPage />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Default redirect */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

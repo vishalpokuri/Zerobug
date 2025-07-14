@@ -1,1 +1,137 @@
 @import "tailwindcss";
+
+/* Custom noise pattern for backgrounds */
+.bg-noise {
+  background-image: radial-gradient(
+      circle at 25% 25%,
+      rgba(255, 255, 255, 0.05) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    ),
+    radial-gradient(
+      circle at 75% 75%,
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px
+    );
+  background-size: 50px 50px, 30px 30px, 20px 20px;
+  background-position: 0 0, 15px 15px, 30px 30px;
+}
+
+/* Logo text shadow - Subtle Yellow Glow */
+.logo-text-shadow {
+  text-shadow: 0 2px 4px rgba(255, 204, 0, 0.25),
+    0 1px 2px rgba(255, 204, 0, 0.2), 0 0 8px rgba(255, 204, 0, 0.15);
+  transition: text-shadow 0.3s ease;
+}
+
+.logo-text-shadow:hover {
+  text-shadow: 0 2px 6px rgba(255, 204, 0, 0.25),
+    0 1px 3px rgba(255, 204, 0, 0.15), 0 0 12px rgba(255, 204, 0, 0.1);
+}
+
+/* Subtle animations */
+@keyframes subtle-scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.01);
+  }
+}
+
+.animate-subtle-scale {
+  animation: subtle-scale 3s ease-in-out infinite;
+}
+
+/* Enhanced button hover effects */
+.btn-hover {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-hover:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Input focus effects */
+.input-focus {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.input-focus:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(250, 204, 21, 0.5);
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    0 10px 10px -5px rgba(0, 0, 0, 0.15);
+}
+
+/* Loading animation for import steps */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 5px rgba(250, 204, 21, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.8),
+      0 0 30px rgba(250, 204, 21, 0.4);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@font-face {
+  font-family: "Stem Light";
+  src: url("../src/fonts/Stem-Light.otf");
+}
+
+@font-face {
+  font-family: "Stem Bold";
+  src: url("../src/fonts/Stem-Bold.otf");
+}
+@font-face {
+  font-family: "Stem BoldItalic";
+  src: url("../src/fonts/Stem-BoldItalic.otf");
+}
+@font-face {
+  font-family: "Stem Medium";
+  src: url("../src/fonts/Stem-Medium.otf");
+}
+@font-face {
+  font-family: "Stem Regular";
+  src: url("../src/fonts/Stem-Regular.otf");
+}
+
+@theme {
+  --font-rl: Stem Light, "sans-serif";
+}
+
+@theme {
+  --font-rb: Stem Bold, "sans-serif";
+}
+@theme {
+  --font-rbi: Stem BoldItalic, "sans-serif";
+}
+
+@theme {
+  --font-rm: Stem Medium, "sans-serif";
+}
+@theme {
+  --font-rr: Stem Regular, "sans-serif";
+}

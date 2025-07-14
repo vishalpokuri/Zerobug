@@ -1,9 +1,15 @@
 import type { Node } from "@xyflow/react";
 
+interface NodeData {
+  endpointData?: {
+    method?: string;
+  };
+}
+
 export const getNodeColor = (node: Node) => {
   switch (node.type) {
-    case "customNode":
-      const method = (node.data as any)?.endpointData?.method;
+    case "customNode": {
+      const method = (node.data as NodeData)?.endpointData?.method;
       switch (method) {
         case "POST":
           return "#ff9800"; // Orange for POST
@@ -18,6 +24,7 @@ export const getNodeColor = (node: Node) => {
         default:
           return "#666"; // Gray for unknown
       }
+    }
     default:
       return "#666"; // Default gray
   }
