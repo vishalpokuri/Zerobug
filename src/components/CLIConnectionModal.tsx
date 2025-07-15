@@ -1,4 +1,3 @@
-import { useState, useEffect } from "react";
 import { useWebSocketContext } from "../contexts/WebSocketContext";
 import { CloseIcon, TerminalIcon } from "../Svg/Icons";
 
