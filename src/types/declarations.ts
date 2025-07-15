@@ -15,3 +15,13 @@ export const requestDataTypes = {
 };
 
 export type activeTabType = "body" | "query" | "params";
+
+export const ConnectionStatus = {
+  DISCONNECTED: "disconnected",
+  CONNECTING: "connecting",
+  CONNECTED: "connected",
+  ERROR: "error",
+} as const;
+
+export type ConnectionStatus =
+  (typeof ConnectionStatus)[keyof typeof ConnectionStatus];

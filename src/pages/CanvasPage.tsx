@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ReactFlow,
@@ -17,6 +17,9 @@ import {
 import "@xyflow/react/dist/style.css";
 import { CustomNode } from "../components/CustomNode";
 import { BufferNode } from "../components/BufferNode";
+import { CLIConnectionModal } from "../components/CLIConnectionModal";
+import { ConnectionStatusIndicator } from "../components/ConnectionStatusIndicator";
+import { ArrowLeftIcon } from "../Svg/Icons";
 import {
   mockEndpoints,
   parseEndpointsToTree,
@@ -43,6 +46,7 @@ export function CanvasPage() {
   const navigate = useNavigate();
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [showCLIModal, setShowCLIModal] = useState(false);
 
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -50,7 +54,7 @@ export function CanvasPage() {
   );
 
   const handleBackToDashboard = () => {
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   return (
@@ -63,18 +67,21 @@ export function CanvasPage() {
               onClick={handleBackToDashboard}
               className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
+              <ArrowLeftIcon />
               Dashboard
             </button>
             <div className="h-4 w-px bg-gray-600" />
             <span className="text-white font-medium">
-              Project {projectId === 'imported-project' ? '(Imported)' : projectId}
+              Project{" "}
+              {projectId === "imported-project" ? "(Imported)" : projectId}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-2">
+            <ConnectionStatusIndicator 
+              onClick={() => setShowCLIModal(true)} 
+              projectId={projectId}
+            />
             <button className="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded transition-colors">
               Save
             </button>
@@ -119,6 +126,13 @@ export function CanvasPage() {
           />
         </ReactFlow>
       </div>
+
+      {/* CLI Connection Modal */}
+      <CLIConnectionModal
+        isOpen={showCLIModal}
+        onClose={() => setShowCLIModal(false)}
+        projectId={projectId}
+      />
     </div>
   );
 }
