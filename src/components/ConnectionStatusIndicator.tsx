@@ -1,20 +1,18 @@
-import {
-  useWebSocketConnection,
-  ConnectionStatus,
-} from "../hooks/useWebSocketConnection";
+import { useWebSocketContext } from "../contexts/WebSocketContext";
+import { ConnectionStatus } from "../types/declarations";
 
-import { getStatusColor, getStatusText } from "../utils/utilityFunctions";
+import { getStatusColorBG } from "../utils/utilityFunctions";
 
 interface ConnectionStatusIndicatorProps {
   onClick: () => void;
-  projectId?: string;
 }
 
 export function ConnectionStatusIndicator({
   onClick,
-  projectId = "your-project",
 }: ConnectionStatusIndicatorProps) {
-  const { status } = useWebSocketConnection({ id: projectId });
+  const { status } = useWebSocketContext();
+
+  console.log("Indicator status: ", status);
 
   const shouldAnimate =
     status === ConnectionStatus.CONNECTING ||
@@ -23,14 +21,14 @@ export function ConnectionStatusIndicator({
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2 px-3 py-1.5 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
+      className="flex items-center gap-2 px-3 py-1.5 border border-gray-600/50 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded-full transition-colors"
     >
       <div
-        className={`w-2 h-2 rounded-full ${getStatusColor(status)} ${
+        className={`w-2 h-2 rounded-full ${getStatusColorBG(status)} ${
           shouldAnimate ? "animate-pulse" : ""
         }`}
       />
-      <span className="text-xs">{getStatusText(status)}</span>
+      <span className="text-xs font-rr">{status.toLocaleUpperCase()}</span>
     </button>
   );
 }

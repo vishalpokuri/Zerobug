@@ -31,16 +31,28 @@ export const getNodeColor = (node: Node) => {
   }
 };
 
-export const getStatusColor = (status: ConnectionStatus) => {
+export const getStatusColorText = (status: ConnectionStatus) => {
   switch (status) {
-    case ConnectionStatus.CONNECTED:
+    case ConnectionStatus.CONNECTED || "connected":
       return "text-green-400";
-    case ConnectionStatus.CONNECTING:
+    case ConnectionStatus.CONNECTING || "connecting":
       return "text-yellow-400";
-    case ConnectionStatus.ERROR:
+    case ConnectionStatus.ERROR || "error":
       return "text-red-400";
     default:
       return "text-gray-400";
+  }
+};
+export const getStatusColorBG = (status: ConnectionStatus) => {
+  switch (status) {
+    case ConnectionStatus.CONNECTED || "connected":
+      return "bg-green-400";
+    case ConnectionStatus.CONNECTING || "connecting":
+      return "bg-yellow-400";
+    case ConnectionStatus.ERROR || "error":
+      return "bg-red-400";
+    default:
+      return "bg-gray-400";
   }
 };
 

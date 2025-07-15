@@ -8,6 +8,7 @@ interface UseWebSocketConnectionReturn {
   sendMessage: (message: string) => void;
   lastMessage: string | null;
   setStatus: (status: ConnectionStatus) => void;
+  retryCount: number;
 }
 
 interface useWSProps {
@@ -21,17 +22,19 @@ export function useWebSocketConnection({
   frontend,
   backend,
 }: useWSProps): UseWebSocketConnectionReturn {
-  let baseUrl = "ws://localhost:9229";
-  let idString = id ? `id=${id}` : "";
-  let frontendString = frontend ? `&frontend=${frontend}` : "";
-  let backendString = backend ? `&backend=${backend}` : "";
-  let url = `${baseUrl}?${idString}${frontendString}${backendString}`;
+  const baseUrl = "ws://localhost:9229";
+  const idString = id ? `id=${id}` : "";
+  const frontendString = frontend ? `&frontend=${frontend}` : "";
+  const backendString = backend ? `&backend=${backend}` : "";
+  const url = `${baseUrl}?${idString}${frontendString}${backendString}`;
 
   const [status, setStatus] = useState<ConnectionStatus>(
     ConnectionStatus.DISCONNECTED
   );
   const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState<number>(0);
   const wsRef = useRef<WebSocket | null>(null);
+  const isManualDisconnect = useRef<boolean>(false);
   const maxRetries = 3;
   const retryInterval = 3000;
 
@@ -45,6 +48,7 @@ export function useWebSocketConnection({
 
   const attemptRetry = useCallback(
     (attempt: number) => {
+      setRetryCount((prev) => prev + 1);
       if (attempt > maxRetries) {
         console.log("Max retries reached. Connection failed.");
         setStatus(ConnectionStatus.ERROR);
@@ -70,6 +74,13 @@ export function useWebSocketConnection({
 
           retryWs.onclose = (retryEvent) => {
             wsRef.current = null;
+
+            // If it's a manual disconnect, don't retry
+            if (isManualDisconnect.current) {
+              isManualDisconnect.current = false;
+              setStatus(ConnectionStatus.DISCONNECTED);
+              return;
+            }
 
             // Only retry on network failures, not server rejections
             if (retryEvent.code !== 1000 && retryEvent.code !== 1008) {
@@ -103,9 +114,11 @@ export function useWebSocketConnection({
     }
 
     cleanup();
+    isManualDisconnect.current = false; // Reset manual disconnect flag
     setStatus(ConnectionStatus.CONNECTING);
 
     try {
+      setRetryCount(0);
       const ws = new WebSocket(url);
       wsRef.current = ws;
 
@@ -126,6 +139,13 @@ export function useWebSocketConnection({
           wasClean: event.wasClean,
         });
         wsRef.current = null;
+
+        // If it's a manual disconnect, don't retry
+        if (isManualDisconnect.current) {
+          isManualDisconnect.current = false;
+          setStatus(ConnectionStatus.DISCONNECTED);
+          return;
+        }
 
         // Only retry on network failures, not server rejections
         if (event.code !== 1000 && event.code !== 1008) {
@@ -152,7 +172,10 @@ export function useWebSocketConnection({
   }, [url, cleanup]);
 
   const disconnect = useCallback(() => {
+    isManualDisconnect.current = true;
+    setRetryCount(0); // Reset retry count on manual disconnect
     cleanup();
+    console.log("cleanup called from disconnect fn");
     setStatus(ConnectionStatus.DISCONNECTED);
   }, [cleanup]);
 
@@ -168,7 +191,7 @@ export function useWebSocketConnection({
     return () => {
       cleanup();
     };
-  }, []);
+  }, [cleanup]);
 
   return {
     status,
@@ -177,6 +200,7 @@ export function useWebSocketConnection({
     sendMessage,
     lastMessage,
     setStatus,
+    retryCount,
   };
 }
 export { ConnectionStatus };

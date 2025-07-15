@@ -1,14 +1,11 @@
 import { useState, useEffect } from "react";
-import { useWebSocketConnection } from "../hooks/useWebSocketConnection";
-import { CloseIcon, TerminalIcon, CheckIcon, CopyIcon } from "../Svg/Icons";
+import { useWebSocketContext } from "../contexts/WebSocketContext";
+import { CloseIcon, TerminalIcon } from "../Svg/Icons";
 
-import {
-  getStatusColor,
-  getStatusIcon,
-  getStatusText,
-} from "../utils/utilityFunctions";
+import { getStatusIcon } from "../utils/utilityFunctions";
 
 import { ConnectionStatus } from "../types/declarations";
+import CodeBlock from "./ui/CodeBlock";
 
 interface CLIConnectionModalProps {
   isOpen: boolean;
@@ -16,49 +13,147 @@ interface CLIConnectionModalProps {
   projectId?: string;
 }
 
+// Reusable Status Card Components
+const StatusCard = ({
+  icon,
+  title,
+  subtitle,
+  children,
+  variant = "default",
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  children?: React.ReactNode;
+  variant?: "default" | "error" | "connecting" | "success";
+}) => {
+  const variantStyles = {
+    default: "bg-gray-800/10 border-gray-700/20",
+    error: "bg-red-500/10 border-red-500/20",
+    connecting: "bg-yellow-400/10 border-yellow-400/20",
+    success: "bg-green-500/10 border-green-500/20",
+  };
+
+  const iconBgStyles = {
+    default: "bg-gray-800/20",
+    error: "bg-red-500/20",
+    connecting: "bg-yellow-400/20 animate-pulse",
+    success: "bg-green-500/20",
+  };
+
+  return (
+    <div className="text-center">
+      <div className="mb-6">
+        <div
+          className={`w-20 h-20 mx-auto mb-4 ${variantStyles[variant]} border-2 rounded-full flex items-center justify-center relative`}
+        >
+          <div
+            className={`w-12 h-12 ${iconBgStyles[variant]} rounded-full flex items-center justify-center`}
+          >
+            {icon}
+          </div>
+          {variant === "error" && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+          )}
+          {variant === "connecting" && (
+            <div className="absolute inset-0 border-2 border-yellow-400/30 rounded-full animate-ping"></div>
+          )}
+        </div>
+        <h3 className="text-xl font-semibold text-white mb-3">{title}</h3>
+        <p className="text-gray-400 text-sm max-w-sm mx-auto leading-relaxed">
+          {subtitle}
+        </p>
+      </div>
+      {children}
+    </div>
+  );
+};
+
+const ConnectingProgress = ({ retryCount }: { retryCount: number }) => {
+  const maxRetries = 3;
+  const progressPercentage = Math.min((retryCount / maxRetries) * 100, 100);
+
+  return (
+    <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
+      <div className="flex items-center justify-center gap-3 mb-4">
+        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"></div>
+        <div
+          className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+          style={{ animationDelay: "0.1s" }}
+        ></div>
+        <div
+          className="w-2 h-2 bg-yellow-400 rounded-full animate-bounce"
+          style={{ animationDelay: "0.2s" }}
+        ></div>
+      </div>
+      <div className="text-sm text-yellow-400 font-medium mb-3">
+        {retryCount == 0
+          ? "Attempting Connection..."
+          : `Retrying Connection... (${retryCount}/${maxRetries})`}
+      </div>
+      <div className="text-xs text-gray-500 mb-3">Retrying every 3 seconds</div>
+      <div className="w-full bg-gray-700 rounded-full h-2 overflow-hidden">
+        <div
+          className="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000 ease-out"
+          style={{ width: `${progressPercentage}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+};
+
+const ActionButtons = ({
+  primaryAction,
+  secondaryAction,
+}: {
+  primaryAction: { label: string; onClick: () => void; icon?: string };
+  secondaryAction?: { label: string; onClick: () => void; icon?: string };
+}) => (
+  <div className="flex gap-3 justify-center">
+    {secondaryAction && (
+      <button
+        onClick={secondaryAction.onClick}
+        className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-800/50"
+      >
+        {secondaryAction.icon} {secondaryAction.label}
+      </button>
+    )}
+    <button
+      onClick={primaryAction.onClick}
+      className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105"
+    >
+      {primaryAction.icon} {primaryAction.label}
+    </button>
+  </div>
+);
+
 export function CLIConnectionModal({
   isOpen,
   onClose,
   projectId = "your-project",
 }: CLIConnectionModalProps) {
-  const { status, connect, disconnect, setStatus } = useWebSocketConnection({
-    id: projectId,
-  });
-  const [showModal, setShowModal] = useState(isOpen);
-  const [copied, setCopied] = useState(false);
+  const { status, connect, disconnect, setStatus, retryCount } =
+    useWebSocketContext();
 
   const backendPort = "3000"; // Default backend port, can be made configurable
   const command = `zerobug sniff --id=${projectId} --backend=${backendPort}`;
-
-  useEffect(() => {
-    console.log("status: ", status);
-  }, [status]);
-
-  useEffect(() => {
-    setShowModal(isOpen);
-  }, [isOpen]);
 
   const handleConnect = () => {
     connect();
   };
 
-  const handleCopyCommand = async () => {
-    try {
-      await navigator.clipboard.writeText(command);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy command:", err);
-    }
-  };
-
   const handleClose = () => {
-    disconnect();
-    setShowModal(false);
     onClose();
   };
 
-  if (!showModal) return null;
+  const handleDisconnect = () => {
+    disconnect();
+    onClose();
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -76,157 +171,131 @@ export function CLIConnectionModal({
 
         {/* Content */}
         <div className="p-6">
-          {status === ConnectionStatus.DISCONNECTED ||
-          status === ConnectionStatus.ERROR ? (
-            // Step 1: Show CLI Command
-            <div className="text-center">
-              {/* Main content */}
-              <div className="mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
-                  <TerminalIcon className="w-8 h-8 text-yellow-400" />
-                </div>
-                <h3 className="text-lg font-medium text-white mb-2">
-                  Connect to CLI Application
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Run this command in your terminal to start the CLI application
-                </p>
-              </div>
+          {(() => {
+            switch (status) {
+              case ConnectionStatus.DISCONNECTED:
+                return (
+                  <div className="text-center">
+                    {/* Main content */}
+                    <div className="mb-6">
+                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
+                        <TerminalIcon className="w-8 h-8 text-yellow-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-white mb-2">
+                        Connect to CLI Application
+                      </h3>
+                      <p className="text-gray-400 text-sm">
+                        Run this command in your terminal to start the CLI
+                        application
+                      </p>
+                    </div>
 
-              {/* CLI Command to copy*/}
-              <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs text-gray-400 font-mono">
-                    Terminal Command
-                  </span>
-                  <button
-                    onClick={handleCopyCommand}
-                    className="text-xs text-yellow-400 hover:text-yellow-300 flex items-center gap-1"
+                    {/* CLI Command to copy*/}
+                    <CodeBlock command={command} />
+
+                    {/* Instructions */}
+                    <InstructionsSection />
+
+                    <button
+                      onClick={handleConnect}
+                      className="w-full px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded transition-colors"
+                    >
+                      Connect to CLI
+                    </button>
+                  </div>
+                );
+
+              case ConnectionStatus.ERROR:
+                return (
+                  <StatusCard
+                    variant="error"
+                    icon={getStatusIcon(status)}
+                    title="Connection Failed"
+                    subtitle="Unable to establish connection. Please ensure your CLI application is running and try again."
                   >
-                    {copied ? (
-                      <>
-                        <CheckIcon />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <CopyIcon />
-                        Copy
-                      </>
-                    )}
-                  </button>
-                </div>
-                <code className="text-white font-mono text-sm break-all select-all">
-                  {command}
-                </code>
-              </div>
+                    <ActionButtons
+                      primaryAction={{
+                        label: "Retry Connection",
+                        onClick: handleConnect,
+                        icon: "🔄",
+                      }}
+                      secondaryAction={{
+                        label: "Back to Setup",
+                        onClick: () => setStatus(ConnectionStatus.DISCONNECTED),
+                        icon: "←",
+                      }}
+                    />
+                  </StatusCard>
+                );
 
-              {/* Instructions */}
-              <div className="text-left bg-gray-800/50 rounded-lg p-4 mb-6">
-                <h4 className="text-sm font-medium text-white mb-2">Steps:</h4>
-                <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
-                  <li>Copy the command above</li>
-                  <li>Paste and run it in your terminal</li>
-                  <li>Click "Connect" below once the CLI is running</li>
-                </ol>
-              </div>
+              case ConnectionStatus.CONNECTING:
+                return (
+                  <StatusCard
+                    variant="connecting"
+                    icon={getStatusIcon(status)}
+                    title="Connecting to CLI"
+                    subtitle="Establishing WebSocket connection on port 9229"
+                  >
+                    <ConnectingProgress retryCount={retryCount} />
+                  </StatusCard>
+                );
 
-              <button
-                onClick={handleConnect}
-                className="w-full px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded transition-colors"
-              >
-                Connect to CLI
-              </button>
-            </div>
-          ) : (
-            // Step 2: Show Connection Status
-            <div className="text-center">
-              <div className="mb-6">
-                <div className="w-16 h-16 mx-auto mb-4 bg-gray-800 rounded-full flex items-center justify-center">
-                  {getStatusIcon(status)}
-                </div>
-                <h3 className="text-lg font-medium text-white mb-2">
-                  Connecting to CLI
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Attempting to establish WebSocket connection on port 9229
-                </p>
-              </div>
+              case ConnectionStatus.CONNECTED:
+                return (
+                  <StatusCard
+                    variant="success"
+                    icon={getStatusIcon(status)}
+                    title="CLI Connected"
+                    subtitle="Successfully connected to your CLI application"
+                  ></StatusCard>
+                );
 
-              {/* Connection Status */}
-              <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  {getStatusIcon(status)}
-                  <span className={`font-medium ${getStatusColor(status)}`}>
-                    {getStatusText(status)}
-                  </span>
-                </div>
-
-                {status === ConnectionStatus.CONNECTING && (
-                  <div className="mt-3">
-                    <div className="text-xs text-gray-500 mb-2">
-                      Retrying every 3 seconds...
-                    </div>
-                    <div className="w-full bg-gray-700 rounded-full h-1">
-                      <div className="bg-yellow-400 h-1 rounded-full animate-pulse w-1/2"></div>
-                    </div>
-                  </div>
-                )}
-
-                {status === ConnectionStatus.CONNECTED && (
-                  <div className="mt-3">
-                    <div className="text-xs text-green-400">
-                      ✓ Connection established successfully
-                    </div>
-                  </div>
-                )}
-
-                {/* {status === ConnectionStatus.ERROR && ( */}
-                {false && (
-                  <div className="mt-3">
-                    <div className="text-xs text-red-400 mb-3">
-                      Unable to connect. Make sure your CLI application is
-                      running.
-                    </div>
-                    <div className="flex gap-2 justify-center">
-                      <button
-                        onClick={() => setStatus(ConnectionStatus.DISCONNECTED)}
-                        className="px-3 py-1 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-xs font-medium rounded transition-colors"
-                      >
-                        Back to Command
-                      </button>
-                      <button
-                        onClick={handleConnect}
-                        className="px-3 py-1 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-xs font-medium rounded transition-colors"
-                      >
-                        Retry Connection
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+              default:
+                return null;
+            }
+          })()}
         </div>
 
         {/* Footer */}
         <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
-          >
-            Close
-          </button>
-          {status === ConnectionStatus.CONNECTED && (
+          {status === ConnectionStatus.CONNECTED ? (
+            <>
+              <button
+                onClick={handleClose}
+                className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
+              >
+                Continue
+              </button>
+              <button
+                onClick={handleDisconnect}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded transition-colors"
+              >
+                Disconnect
+              </button>
+            </>
+          ) : (
             <button
               onClick={handleClose}
-              className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded transition-colors"
+              className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
             >
-              Continue
+              Cancel
             </button>
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function InstructionsSection() {
+  return (
+    <div className="text-left bg-gray-800/50 rounded-lg p-4 mb-6">
+      <h4 className="text-sm font-medium text-white mb-2">Steps:</h4>
+      <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
+        <li>Copy the command above</li>
+        <li>Paste and run it in your terminal</li>
+        <li>Click "Connect" below once the CLI is running</li>
+      </ol>
     </div>
   );
 }

@@ -1,14 +1,20 @@
-import { GithubIcon, FolderIcon, LightningIcon, ClockIcon, ArrowRightIcon } from '../../Svg/Icons';
+import {
+  GithubIcon,
+  FolderIcon,
+  LightningIcon,
+  ClockIcon,
+  ArrowRightIcon,
+} from "../../Svg/Icons";
 
 interface Project {
   id: string;
   name: string;
   lastEdited: string;
-  type: 'local' | 'github';
+  type: "local" | "github";
   description?: string;
   routes?: number;
   lastActivity?: string;
-  status?: 'active' | 'idle' | 'error';
+  status?: "active" | "idle" | "error";
 }
 
 interface ProjectCardProps {
@@ -19,14 +25,17 @@ interface ProjectCardProps {
 export default function ProjectCard({ project, onClick }: ProjectCardProps) {
   const getStatusColor = (status?: string) => {
     switch (status) {
-      case 'active': return 'bg-green-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-500';
+      case "active":
+        return "bg-green-500";
+      case "error":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
     }
   };
 
   const getTypeIcon = (type: string) => {
-    if (type === 'github') {
+    if (type === "github") {
       return <GithubIcon className="w-4 h-4" />;
     }
     return <FolderIcon className="w-4 h-4" />;
@@ -39,11 +48,15 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
     >
       {/* Subtle noise overlay */}
       <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
-      
+
       {/* Status indicator */}
       <div className="absolute top-4 right-4 flex items-center gap-2">
-        <div className={`w-2 h-2 rounded-full ${getStatusColor(project.status)}`} />
-        <span className="text-xs text-gray-500 font-rm">{project.status || 'idle'}</span>
+        <div
+          className={`w-2 h-2 rounded-full ${getStatusColor(project.status)}`}
+        />
+        <span className="text-xs text-gray-500 font-rm">
+          {project.status || "idle"}
+        </span>
       </div>
 
       {/* Project header */}
@@ -52,8 +65,12 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
           {getTypeIcon(project.type)}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-rb text-white truncate">{project.name}</h3>
-          <p className="text-sm text-gray-400 font-rr">{project.description || 'No description'}</p>
+          <h3 className="text-lg font-rb text-white truncate">
+            {project.name}
+          </h3>
+          <p className="text-sm text-gray-400 font-rr">
+            {project.description || "No description"}
+          </p>
         </div>
       </div>
 
