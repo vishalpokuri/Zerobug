@@ -98,24 +98,24 @@
 
 @font-face {
   font-family: "Stem Light";
-  src: url("../src/fonts/Stem-Light.otf");
+  src: url("../src/assets/fonts/Stem-Light.otf");
 }
 
 @font-face {
   font-family: "Stem Bold";
-  src: url("../src/fonts/Stem-Bold.otf");
+  src: url("../src/assets/fonts/Stem-Bold.otf");
 }
 @font-face {
   font-family: "Stem BoldItalic";
-  src: url("../src/fonts/Stem-BoldItalic.otf");
+  src: url("../src/assets/fonts/Stem-BoldItalic.otf");
 }
 @font-face {
   font-family: "Stem Medium";
-  src: url("../src/fonts/Stem-Medium.otf");
+  src: url("../src/assets/fonts/Stem-Medium.otf");
 }
 @font-face {
   font-family: "Stem Regular";
-  src: url("../src/fonts/Stem-Regular.otf");
+  src: url("../src/assets/fonts/Stem-Regular.otf");
 }
 
 @theme {

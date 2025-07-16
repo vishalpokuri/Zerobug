@@ -39,6 +39,8 @@ export const getStatusColorText = (status: ConnectionStatus) => {
       return "text-yellow-400";
     case ConnectionStatus.ERROR || "error":
       return "text-red-400";
+    case ConnectionStatus.INSTANCE_ALREADY_RUNNING || "instance_already_running":
+      return "text-orange-400";
     default:
       return "text-gray-400";
   }
@@ -51,6 +53,8 @@ export const getStatusColorBG = (status: ConnectionStatus) => {
       return "bg-yellow-400";
     case ConnectionStatus.ERROR || "error":
       return "bg-red-400";
+    case ConnectionStatus.INSTANCE_ALREADY_RUNNING || "instance_already_running":
+      return "bg-orange-400";
     default:
       return "bg-gray-400";
   }
@@ -68,6 +72,8 @@ export const getStatusIcon = (status: ConnectionStatus) => {
       );
     case ConnectionStatus.ERROR:
       return <div className="w-4 h-4 bg-red-400 rounded-full" />;
+    case ConnectionStatus.INSTANCE_ALREADY_RUNNING:
+      return <div className="w-4 h-4 bg-orange-400 rounded-full animate-pulse" />;
     default:
       return <div className="w-4 h-4 bg-gray-400 rounded-full" />;
   }
@@ -81,6 +87,8 @@ export const getStatusText = (status: ConnectionStatus) => {
       return "Connecting to CLI Application...";
     case ConnectionStatus.ERROR:
       return "Failed to connect to CLI Application";
+    case ConnectionStatus.INSTANCE_ALREADY_RUNNING:
+      return "CLI Instance Already Running";
     default:
       return "Disconnected from CLI Application";
   }

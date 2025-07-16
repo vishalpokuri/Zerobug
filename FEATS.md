@@ -4,6 +4,3 @@ const edges = [
 ];
 
 TODO:
-
-- robust connection logic in the modal still needed, buttons arent working great.
-- Automatic failover is also an issue, reconstruct the whole logic again.

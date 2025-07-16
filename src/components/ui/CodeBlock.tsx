@@ -17,17 +17,17 @@ function CodeBlock({ command }: { command: string }) {
   return (
     <div className="relative bg-[#0a0a0a] border border-gray-800/50 rounded-lg p-4 mb-6 overflow-hidden">
       {/* Grainy texture overlay */}
-      <div 
+      <div
         className="absolute inset-0 opacity-20 pointer-events-none"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='7' cy='7' r='1'/%3E%3Ccircle cx='13' cy='13' r='1'/%3E%3Ccircle cx='19' cy='19' r='1'/%3E%3Ccircle cx='25' cy='25' r='1'/%3E%3Ccircle cx='31' cy='31' r='1'/%3E%3Ccircle cx='37' cy='37' r='1'/%3E%3Ccircle cx='43' cy='43' r='1'/%3E%3Ccircle cx='49' cy='49' r='1'/%3E%3Ccircle cx='55' cy='55' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-          backgroundSize: '30px 30px'
+          backgroundSize: "30px 30px",
         }}
       />
-      
+
       {/* Subtle gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-gray-900/20 via-transparent to-gray-800/10 pointer-events-none" />
-      
+
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-3">
@@ -54,7 +54,7 @@ function CodeBlock({ command }: { command: string }) {
             )}
           </button>
         </div>
-        
+
         <div className="bg-black/40 border border-gray-800/60 rounded-md p-3 backdrop-blur-sm">
           <code className="text-gray-100 font-mono text-sm leading-relaxed break-all select-all block">
             <span className="text-yellow-400 opacity-70">$</span>{" "}

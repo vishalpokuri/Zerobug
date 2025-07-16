@@ -1,10 +1,11 @@
 import { useWebSocketContext } from "../contexts/WebSocketContext";
-import { CloseIcon, TerminalIcon } from "../Svg/Icons";
+import { ChevronLeft, CloseIcon, RetryIcon, TerminalIcon } from "../Svg/Icons";
 
 import { getStatusIcon } from "../utils/utilityFunctions";
 
 import { ConnectionStatus } from "../types/declarations";
 import CodeBlock from "./ui/CodeBlock";
+import type React from "react";
 
 interface CLIConnectionModalProps {
   isOpen: boolean;
@@ -24,13 +25,14 @@ const StatusCard = ({
   title: string;
   subtitle: string;
   children?: React.ReactNode;
-  variant?: "default" | "error" | "connecting" | "success";
+  variant?: "default" | "error" | "connecting" | "success" | "warning";
 }) => {
   const variantStyles = {
     default: "bg-gray-800/10 border-gray-700/20",
     error: "bg-red-500/10 border-red-500/20",
     connecting: "bg-yellow-400/10 border-yellow-400/20",
     success: "bg-green-500/10 border-green-500/20",
+    warning: "bg-orange-500/10 border-orange-500/20",
   };
 
   const iconBgStyles = {
@@ -38,6 +40,7 @@ const StatusCard = ({
     error: "bg-red-500/20",
     connecting: "bg-yellow-400/20 animate-pulse",
     success: "bg-green-500/20",
+    warning: "bg-orange-500/20 animate-pulse",
   };
 
   return (
@@ -54,6 +57,11 @@ const StatusCard = ({
           {variant === "error" && (
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">!</span>
+            </div>
+          )}
+          {variant === "warning" && (
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-xs font-bold">⚠</span>
             </div>
           )}
           {variant === "connecting" && (
@@ -107,21 +115,29 @@ const ActionButtons = ({
   primaryAction,
   secondaryAction,
 }: {
-  primaryAction: { label: string; onClick: () => void; icon?: string };
-  secondaryAction?: { label: string; onClick: () => void; icon?: string };
+  primaryAction: {
+    label: string;
+    onClick: () => void;
+    icon?: string | React.ReactNode;
+  };
+  secondaryAction?: {
+    label: string;
+    onClick: () => void;
+    icon?: string | React.ReactNode;
+  };
 }) => (
   <div className="flex gap-3 justify-center">
     {secondaryAction && (
       <button
         onClick={secondaryAction.onClick}
-        className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-800/50"
+        className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded-lg transition-all duration-200 hover:bg-gray-800/50 flex justify-center items-center gap-2"
       >
         {secondaryAction.icon} {secondaryAction.label}
       </button>
     )}
     <button
       onClick={primaryAction.onClick}
-      className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg hover:scale-105"
+      className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-medium rounded-lg transition-all duration-200 hover:shadow-lg  flex justify-center items-center gap-2"
     >
       {primaryAction.icon} {primaryAction.label}
     </button>
@@ -149,7 +165,6 @@ export function CLIConnectionModal({
 
   const handleDisconnect = () => {
     disconnect();
-    onClose();
   };
 
   if (!isOpen) return null;
@@ -216,12 +231,35 @@ export function CLIConnectionModal({
                       primaryAction={{
                         label: "Retry Connection",
                         onClick: handleConnect,
-                        icon: "🔄",
+                        icon: <RetryIcon />,
                       }}
                       secondaryAction={{
                         label: "Back to Setup",
                         onClick: () => setStatus(ConnectionStatus.DISCONNECTED),
-                        icon: "←",
+                        icon: <ChevronLeft />,
+                      }}
+                    />
+                  </StatusCard>
+                );
+
+              case ConnectionStatus.INSTANCE_ALREADY_RUNNING:
+                return (
+                  <StatusCard
+                    variant="warning"
+                    icon={getStatusIcon(status)}
+                    title="Already running another project"
+                    subtitle="It looks like you are already running a Zerobug instance. Quit the current running CLI command and retry with the new one."
+                  >
+                    <ActionButtons
+                      primaryAction={{
+                        label: "Retry Connection",
+                        onClick: handleConnect,
+                        icon: <RetryIcon />,
+                      }}
+                      secondaryAction={{
+                        label: "Back to Setup",
+                        onClick: () => setStatus(ConnectionStatus.DISCONNECTED),
+                        icon: <ChevronLeft />,
                       }}
                     />
                   </StatusCard>
@@ -257,29 +295,38 @@ export function CLIConnectionModal({
 
         {/* Footer */}
         <div className="flex justify-end gap-3 p-6 border-t border-gray-700">
-          {status === ConnectionStatus.CONNECTED ? (
-            <>
-              <button
-                onClick={handleClose}
-                className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
-              >
-                Continue
-              </button>
-              <button
-                onClick={handleDisconnect}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded transition-colors"
-              >
-                Disconnect
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={handleClose}
-              className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
-            >
-              Cancel
-            </button>
-          )}
+          {(() => {
+            switch (status) {
+              case ConnectionStatus.CONNECTED:
+                return (
+                  <>
+                    <button
+                      onClick={handleClose}
+                      className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
+                    >
+                      Continue
+                    </button>
+                    <button
+                      onClick={handleDisconnect}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  </>
+                );
+              case ConnectionStatus.DISCONNECTED:
+                return;
+              default:
+                return (
+                  <button
+                    onClick={handleDisconnect}
+                    className="px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white text-sm font-medium rounded transition-colors"
+                  >
+                    Cancel
+                  </button>
+                );
+            }
+          })()}
         </div>
       </div>
     </div>

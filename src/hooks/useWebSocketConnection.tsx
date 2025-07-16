@@ -87,9 +87,9 @@ export function useWebSocketConnection({
               // Network failure - retry
               attemptRetry(attempt + 1);
             } else if (retryEvent.code === 1008) {
-              // Server rejected connection (invalid project ID, etc.)
+              // Server rejected connection (instance already running, etc.)
               console.log("Server rejected connection:", retryEvent.reason);
-              setStatus(ConnectionStatus.ERROR);
+              setStatus(ConnectionStatus.INSTANCE_ALREADY_RUNNING);
             } else {
               // Clean disconnect (code: 1000)
               setStatus(ConnectionStatus.DISCONNECTED);
@@ -152,9 +152,9 @@ export function useWebSocketConnection({
           // Network failure - start retry sequence
           attemptRetry(1);
         } else if (event.code === 1008) {
-          // Server rejected connection (invalid project ID, etc.)
+          // Server rejected connection (instance already running, etc.)
           console.log("Server rejected connection:", event.reason);
-          setStatus(ConnectionStatus.ERROR);
+          setStatus(ConnectionStatus.INSTANCE_ALREADY_RUNNING);
         } else {
           // Clean disconnect (code 1000)
           setStatus(ConnectionStatus.DISCONNECTED);

@@ -62,7 +62,7 @@ export function CanvasPage() {
     <WebSocketProvider projectId={projectId || "your-project"}>
       <div className="h-screen w-screen bg-[#141414] relative">
         {/* Top navigation bar */}
-        <div className="absolute top-0 left-0 right-0 z-10 bg-black h-[35px] border-b border-gray-700">
+        <div className="absolute top-0 left-0 right-0 z-10 bg-black h-[40px] border-b border-gray-700">
           <div className="flex h-full items-center justify-between px-4 text-xs">
             <div className="flex items-center gap-4 font-rr">
               <button
