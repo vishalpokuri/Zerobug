@@ -28,7 +28,9 @@ export function ConnectionStatusIndicator({
           shouldAnimate ? "animate-pulse" : ""
         }`}
       />
-      <span className="text-xs font-rr">{status.toLocaleUpperCase()}</span>
+      <span className="text-xs font-rr leading-none">
+        {status.toLocaleUpperCase()}
+      </span>
     </button>
   );
 }
