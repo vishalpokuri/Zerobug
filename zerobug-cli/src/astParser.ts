@@ -1,23 +1,8 @@
 import { parse } from "@babel/parser";
 import traverse from "@babel/traverse";
 import * as t from "@babel/types";
-import fs from "fs";
-
-interface ParamType {
-  name: string;
-  type: string;
-  required?: boolean;
-}
-
-interface EndpointData {
-  method: string;
-  url: string;
-  headers: string[];
-  requestDataType: "params" | "query" | "body" | "none";
-  paramTypes: ParamType[];
-  queryParamTypes: ParamType[];
-  bodyParamTypes: ParamType[];
-}
+import { getBackendCode } from "./astParserHelpers";
+import { EndpointData, ParamType } from "./types";
 
 class ExpressRouteParser {
   private routes: EndpointData[] = [];
@@ -605,10 +590,17 @@ export function parseExpressRoutes(code: string): EndpointData[] {
   return parser.parse(code);
 }
 
-const backendCode = fs.readFileSync(
-  "/home/viscanum853/zerobug-cli/sampleBackend.js",
-  "utf-8"
-);
-
-const routes = parseExpressRoutes(backendCode);
-console.log(JSON.stringify(routes, null, 2));
+// Main execution
+(async () => {
+  try {
+    const backendCode = await getBackendCode();
+    const routes = parseExpressRoutes(backendCode);
+    console.log(JSON.stringify(routes, null, 2));
+  } catch (error) {
+    console.error(
+      "Error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    process.exit(1);
+  }
+})();
