@@ -1,10 +1,4 @@
-import {
-  Handle,
-  Position,
-  type NodeProps,
-  NodeResizer,
-  useReactFlow,
-} from "@xyflow/react";
+import { Handle, Position, type NodeProps, NodeResizer } from "@xyflow/react";
 import { useState, useCallback } from "react";
 import { PostmanInterface } from "./PostmanInterface";
 import { SimpleNodeView } from "./SimpleNodeView";
@@ -29,12 +23,11 @@ export interface CustomNodeData {
 }
 
 // Custom Node Component
-export function CustomNode({ data, selected, id }: NodeProps) {
+export function CustomNode({ data, selected }: NodeProps) {
   const nodeData = data as unknown as CustomNodeData;
   const [currentView, setCurrentView] = useState<"simple" | "detailed">(
     "simple"
   );
-  const { setNodes } = useReactFlow();
 
   // Default endpoint data for demonstration
   const defaultEndpointData = {
