@@ -75,7 +75,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
         </div>
       </div>
 
-      {/* Project stats */}
+      {/* Project stats routes and last edited*/}
       <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
         <div className="flex items-center gap-1">
           <LightningIcon className="w-4 h-4" />
@@ -90,7 +90,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
       {/* Action button */}
       <div className="flex items-center justify-between">
         <span className="text-xs px-2 py-1 bg-gray-800 text-gray-400 rounded-full font-rm">
-          {project.type}
+          {project.type != null ? project.type : "local"}
         </span>
         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
           <ArrowRightIcon className="w-5 h-5 text-yellow-400" />

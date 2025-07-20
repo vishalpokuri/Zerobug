@@ -1,5 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws";
 import figlet from "figlet";
+import { getBackendCode } from "./astParserHelpers";
+import { parseExpressRoutes } from "./astParser";
 
 const clients = new Map<string, WebSocket[]>(); // id -> [sockets]
 
@@ -23,14 +25,12 @@ export async function startWebSocketServer(projectId: string) {
     //req.headers.host gives localhost:9229
     //req.url gives 9229/<this>
     const url = new URL(req.url || "", `http://${req.headers.host}`);
-    console.log(req.headers.host);
     const clientId = url.searchParams.get("id");
     console.log(`🚀 Starting Zerobug sniffing for project: ${clientId}`);
 
     //project id will be generated in the client side, a command will be given to copy paste in the terminal, it will start to run
     //checks if the clientId and the received project id is correct. project id will come from command zerobug sniff --id=<here>
     if (!clientId || clientId !== projectId) {
-      console.log("(clientId, projectId)=", clientId, projectId);
       ws.close(1008, "Invalid project ID");
       return;
     }
@@ -41,12 +41,28 @@ export async function startWebSocketServer(projectId: string) {
     console.log(`✅ Client connected for project ID: ${clientId}`);
 
     // Send welcome or dummy test data
-    ws.send(
-      JSON.stringify({
-        type: "connected",
-        message: `Subscribed to ${clientId}`,
-      })
-    );
+    // ws.send(
+    //   JSON.stringify({
+    //     type: "connected",
+    //     message: `Subscribed to ${clientId}`,
+    //   })
+    // );
+
+    //Step-1: Parse the backend code.
+    // Main execution
+    (async () => {
+      try {
+        const backendCode = await getBackendCode();
+        const routes = parseExpressRoutes(backendCode);
+        console.log(JSON.stringify(routes, null, 2));
+      } catch (error) {
+        console.error(
+          "Error:",
+          error instanceof Error ? error.message : String(error)
+        );
+        process.exit(1);
+      }
+    })();
 
     ws.on("message", (data) => {
       try {

@@ -1,63 +1,67 @@
 import fs from "fs";
-import { execSync } from "child_process";
 import path from "path";
 import readline from "readline";
+import { execSync } from "child_process";
 
+/**
+ * Search patterns that indicate an Express backend file
+ */
+const EXPRESS_PATTERNS = [
+  "express()",
+  'require("express")',
+  "import express",
+  "app.get(",
+  "app.post(",
+  "app.use(",
+  "app.listen(",
+];
+
+/**
+ * Priority patterns for common backend file names
+ */
+const FILENAME_PRIORITIES = [
+  /server\.(js|ts|mjs)$/,
+  /index\.(js|ts|mjs)$/,
+  /app\.(js|ts|mjs)$/,
+  /main\.(js|ts|mjs)$/,
+];
+
+/**
+ * Automatically detects backend entry file based on express usage.
+ */
 export function findBackendFile(): string | null {
-  // Express-specific search patterns (in order of reliability)
-  const expressPatterns = [
-    "express()", // require('express')() or import express
-    'require("express")',
-    "app.get", // Express route methods
-    "app.post", // Express route methods
-    "app.use(", // Express middleware
-    "app.listen(", // Express app.listen()
-  ];
-
-  for (const pattern of expressPatterns) {
+  for (const pattern of EXPRESS_PATTERNS) {
     try {
       const result = execSync(
         `grep -r "${pattern}" . --include="*.js" --include="*.ts" --include="*.mjs" 2>/dev/null`,
-        {
-          encoding: "utf8",
-        }
+        { encoding: "utf-8" }
       );
 
       if (result.trim()) {
         const lines = result.trim().split("\n");
-        // console.log(`Found ${lines.length} matches for pattern: ${pattern}`);
-
-        // Extract file paths and prioritize common backend file names
         const filePaths = lines.map((line) => line.split(":")[0]);
+        const uniquePaths = Array.from(new Set(filePaths));
 
-        // Priority order for backend files
-        const priorities = [
-          /server\.(js|ts|mjs)$/,
-          /index\.(js|ts|mjs)$/,
-          /app\.(js|ts|mjs)$/,
-          /main\.(js|ts|mjs)$/,
-        ];
-
-        // Find the highest priority match
-        for (const priority of priorities) {
-          const match = filePaths.find((file) => priority.test(file));
-          if (match) {
-            return path.resolve(match);
-          }
+        // Sort based on filename priority
+        for (const priority of FILENAME_PRIORITIES) {
+          const match = uniquePaths.find((file) => priority.test(file));
+          if (match) return path.resolve(match);
         }
 
-        // If no priority match, use the first one
-        return path.resolve(filePaths[0]);
+        // Fallback: return first found file
+        return path.resolve(uniquePaths[0]);
       }
-    } catch (error) {
-      // Continue to next pattern if this one fails
-      continue;
+    } catch {
+      continue; // Try next pattern
     }
   }
 
   return null;
 }
 
+/**
+ * Prompts user to manually enter backend path if auto-detection fails
+ */
 export async function promptForBackendPath(): Promise<string> {
   const rl = readline.createInterface({
     input: process.stdin,
@@ -72,14 +76,17 @@ export async function promptForBackendPath(): Promise<string> {
   });
 }
 
+/**
+ * Returns backend source code content as string
+ */
 export async function getBackendCode(): Promise<string> {
   let backendPath = findBackendFile();
 
   if (!backendPath) {
-    console.log("No backend file with app.listen() found automatically.");
+    console.log("❌ Could not find backend file automatically.");
     backendPath = await promptForBackendPath();
   } else {
-    console.log(`Found backend file: ${backendPath}`);
+    console.log(`✅ Found backend file: ${backendPath}`);
   }
 
   if (!fs.existsSync(backendPath)) {

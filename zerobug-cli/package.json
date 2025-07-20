@@ -11,7 +11,7 @@
     "zerobug": "dist/index.js"
   },
   "scripts": {
-    "build": "tsup src/astParser.ts",
+    "build": "tsup src/astParser.ts && tsup src/program.ts",
     "dev": "tsup --watch",
     "start": "node dist/index.js"
   },
