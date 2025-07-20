@@ -21,21 +21,17 @@ export const createProject = async (req: Request, res: Response) => {
   }
 };
 
-import EndpointData from "../models/EndpointDataSchema";
-
-export const addEndpointData = async (req: Request, res: Response) => {
+export const saveProject = async (req: Request, res: Response) => {
   try {
-    const { projectId, endpointData } = req.body;
+    const { projectId, endpoints } = req.body;
     const project = await Project.findById(projectId);
     if (!project) {
       return res.status(404).json({ error: "Project not found" });
     }
-    const newEndpointData = new EndpointData(endpointData);
-    await newEndpointData.save();
-    project.endpoints.push(newEndpointData._id);
+    project.endpoints = endpoints;
     await project.save();
-    res.status(201).json({ project });
+    res.status(200).json({ message: "Project saved successfully" });
   } catch (error) {
-    res.status(500).json({ error: "Error adding endpoint data" });
+    res.status(500).json({ error: "Error saving project" });
   }
 };

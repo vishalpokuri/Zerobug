@@ -1,12 +1,8 @@
 import mongoose, { Schema } from "mongoose";
+import { endpointDataSchema } from "./EndpointDataSchema";
+
 const projectSchema = new Schema({
-  endpoints: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "EndpointData",
-      required: true,
-    },
-  ],
+  endpoints: [endpointDataSchema],
 });
 
 const Project = mongoose.model("Project", projectSchema);

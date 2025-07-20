@@ -9,7 +9,7 @@ const ParamSchema = new mongoose.Schema(
   { _id: false }
 );
 
-const endpointDataSchema = new mongoose.Schema({
+export const endpointDataSchema = new mongoose.Schema({
   method: {
     type: String,
     enum: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "ALL"],
@@ -27,6 +27,4 @@ const endpointDataSchema = new mongoose.Schema({
   bodyParamTypes: [ParamSchema],
 });
 
-const EndpointData = mongoose.model("EndpointData", endpointDataSchema);
-
-export default EndpointData;
+// No longer creating a model from this schema, as it will be embedded.
