@@ -9,6 +9,7 @@ interface UseWebSocketConnectionReturn {
   lastMessage: string | null;
   setStatus: (status: ConnectionStatus) => void;
   retryCount: number;
+  isConnected: boolean;
 }
 
 interface useWSProps {
@@ -201,6 +202,7 @@ export function useWebSocketConnection({
     lastMessage,
     setStatus,
     retryCount,
+    isConnected: status === ConnectionStatus.CONNECTED,
   };
 }
 export { ConnectionStatus };

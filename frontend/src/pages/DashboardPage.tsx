@@ -37,7 +37,7 @@ export function DashboardPage() {
         const userId = decodedToken.id;
 
         const response = await fetch(
-          `http://localhost:3001/api/projects/${userId}`,
+          `http://localhost:3001/api/project/user/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -95,7 +95,7 @@ export function DashboardPage() {
 
     try {
       const createProjectPromise = fetch(
-        "http://localhost:3001/api/projects/create",
+        "http://localhost:3001/api/project/create",
         {
           method: "POST",
           headers: {

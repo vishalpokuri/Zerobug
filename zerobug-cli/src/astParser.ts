@@ -595,7 +595,7 @@ export function parseExpressRoutes(code: string): EndpointData[] {
   try {
     const backendCode = await getBackendCode();
     const routes = parseExpressRoutes(backendCode);
-    console.log(JSON.stringify(routes, null, 2));
+    // console.log(JSON.stringify(routes, null, 2));
   } catch (error) {
     console.error(
       "Error:",

@@ -60,7 +60,7 @@ app.get("/api/data/fetch", (req, res) => {
 });
 
 app.post("/api/data/create", (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, name } = req.body;
   res.json({
     success: true,
     data: {

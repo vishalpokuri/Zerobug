@@ -1,6 +1,6 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useWebSocketConnection } from '../hooks/useWebSocketConnection';
-import { ConnectionStatus } from '../types/declarations';
+import { createContext, useContext, type ReactNode } from "react";
+import { useWebSocketConnection } from "../hooks/useWebSocketConnection";
+import { ConnectionStatus } from "../types/declarations";
 
 interface WebSocketContextType {
   status: ConnectionStatus;
@@ -10,9 +10,12 @@ interface WebSocketContextType {
   lastMessage: string | null;
   setStatus: (status: ConnectionStatus) => void;
   retryCount: number;
+  isConnected: boolean;
 }
 
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketContextType | undefined>(
+  undefined
+);
 
 interface WebSocketProviderProps {
   children: ReactNode;
@@ -21,11 +24,11 @@ interface WebSocketProviderProps {
   backend?: string;
 }
 
-export function WebSocketProvider({ 
-  children, 
-  projectId, 
-  frontend, 
-  backend 
+export function WebSocketProvider({
+  children,
+  projectId,
+  frontend,
+  backend,
 }: WebSocketProviderProps) {
   const websocketConnection = useWebSocketConnection({
     id: projectId,
@@ -43,7 +46,9 @@ export function WebSocketProvider({
 export function useWebSocketContext(): WebSocketContextType {
   const context = useContext(WebSocketContext);
   if (context === undefined) {
-    throw new Error('useWebSocketContext must be used within a WebSocketProvider');
+    throw new Error(
+      "useWebSocketContext must be used within a WebSocketProvider"
+    );
   }
   return context;
 }

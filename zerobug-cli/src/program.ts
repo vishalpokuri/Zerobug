@@ -10,7 +10,6 @@ const configFilePath = path.join(process.cwd(), ".zerobugrc");
 
 function saveConfig(config: Record<string, any>) {
   fs.writeFileSync(configFilePath, JSON.stringify(config, null, 2));
-  console.log("✅ Config updated:", config);
 }
 
 function loadConfig(): Record<string, any> {

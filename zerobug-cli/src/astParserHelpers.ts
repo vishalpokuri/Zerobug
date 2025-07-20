@@ -79,19 +79,24 @@ export async function promptForBackendPath(): Promise<string> {
 /**
  * Returns backend source code content as string
  */
-export async function getBackendCode(): Promise<string> {
+export async function getBackendFilePath(): Promise<string> {
   let backendPath = findBackendFile();
 
   if (!backendPath) {
     console.log("❌ Could not find backend file automatically.");
     backendPath = await promptForBackendPath();
   } else {
-    console.log(`✅ Found backend file: ${backendPath}`);
+    console.log(`⚙️ Parsing backend file: ${backendPath}`);
   }
 
   if (!fs.existsSync(backendPath)) {
-    throw new Error(`Backend file not found: ${backendPath}`);
+    throw new Error(`⚠️ Backend file not found: ${backendPath}`);
   }
 
+  return backendPath;
+}
+
+export async function getBackendCode(): Promise<string> {
+  const backendPath = await getBackendFilePath();
   return fs.readFileSync(backendPath, "utf-8");
 }

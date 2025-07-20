@@ -47,41 +47,16 @@ export function CustomNode({ data, selected, id }: NodeProps) {
     bodyParamTypes: [],
   };
 
-  const handleViewChange = useCallback(
-    (view: "simple" | "detailed") => {
-      setCurrentView(view);
-      // Update node dimensions when switching views
-      setNodes((nodes) =>
-        nodes.map((node) => {
-          if (node.id === id) {
-            const newDimensions =
-              view === "simple"
-                ? { width: 320, height: 220 }
-                : { width: 650, height: 450 };
-            return {
-              ...node,
-              style: {
-                ...node.style,
-                width: newDimensions.width,
-                height: newDimensions.height,
-              },
-            };
-          }
-          return node;
-        })
-      );
-    },
-    [id, setNodes]
-  );
+  const handleViewChange = useCallback((view: "simple" | "detailed") => {
+    setCurrentView(view);
+  }, []);
 
   return (
     <div
       className={`bg-gray-900 border-2 rounded-lg shadow-lg relative transition-all duration-300`}
       style={{
-        minWidth: currentView === "simple" ? "320px" : "650px",
-        minHeight: currentView === "simple" ? "220px" : "450px",
-        width: currentView === "simple" ? "320px" : "100%",
-        height: currentView === "simple" ? "220px" : "100%",
+        width: currentView === "simple" ? "320px" : "650px",
+        height: currentView === "simple" ? "220px" : "450px",
       }}
     >
       {/* UI Switcher */}

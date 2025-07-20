@@ -23,7 +23,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-app.use("/api/projects", projectRoutes);
+app.use("/api/project", projectRoutes);
 
 const PORT = process.env.PORT || 3000;
 
