@@ -5,6 +5,7 @@ import {
   ClockIcon,
   ArrowRightIcon,
 } from "../../Svg/Icons";
+import { formatTimeAgo } from "../../utils/time";
 
 interface Project {
   id: string;
@@ -82,7 +83,7 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
         </div>
         <div className="flex items-center gap-1">
           <ClockIcon className="w-4 h-4" />
-          <span className="font-rm">{project.lastEdited}</span>
+          <span className="font-rm">{formatTimeAgo(project.lastEdited)}</span>
         </div>
       </div>
 

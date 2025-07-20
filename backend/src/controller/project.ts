@@ -17,7 +17,7 @@ export const createProject = async (req: Request, res: Response) => {
       .status(201)
       .json({ message: "Created successfully", projectId: project._id });
   } catch (error) {
-    res.status(500).json({ error: "Error creating project" });
+    res.status(500).json({ error: error });
   }
 };
 

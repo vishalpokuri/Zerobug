@@ -17,7 +17,8 @@ import {
 import "@xyflow/react/dist/style.css";
 import { CustomNode } from "../components/CustomNode";
 import { BufferNode } from "../components/BufferNode";
-import { CLIConnectionModal } from "../components/CLIConnectionModal";
+
+import { CLIConnectionModal } from "../components/modals/CLIConnectionModal";
 import { ConnectionStatusIndicator } from "../components/ConnectionStatusIndicator";
 import { WebSocketProvider } from "../contexts/WebSocketContext";
 import { ArrowLeftIcon } from "../Svg/Icons";

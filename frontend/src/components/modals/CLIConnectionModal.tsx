@@ -1,10 +1,15 @@
-import { useWebSocketContext } from "../contexts/WebSocketContext";
-import { ChevronLeft, CloseIcon, RetryIcon, TerminalIcon } from "../Svg/Icons";
+import { useWebSocketContext } from "../../contexts/WebSocketContext";
+import {
+  ChevronLeft,
+  CloseIcon,
+  RetryIcon,
+  TerminalIcon,
+} from "../../Svg/Icons";
 
-import { getStatusIcon } from "../utils/utilityFunctions";
+import { getStatusIcon } from "../../utils/utilityFunctions";
 
-import { ConnectionStatus } from "../types/declarations";
-import CodeBlock from "./ui/CodeBlock";
+import { ConnectionStatus } from "../../types/declarations";
+import CodeBlock from "../ui/CodeBlock";
 import type React from "react";
 
 interface CLIConnectionModalProps {

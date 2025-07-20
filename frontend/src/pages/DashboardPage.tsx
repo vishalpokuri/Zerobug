@@ -8,7 +8,7 @@ import QuickActions from "../components/dashboard/QuickActions";
 import ZerobugLogo from "../components/ZerobugLogo";
 import SystemStatusBadge from "../components/dashboard/SystemStatusBadge";
 import { SearchIcon } from "../Svg/Icons";
-import { CreateProjectModal } from "../components/dashboard/CreateProjectModal";
+import { CreateProjectModal } from "../components/modals/CreateProjectModal";
 
 interface Project {
   _id: string;
@@ -93,45 +93,48 @@ export function DashboardPage() {
     const decodedToken: { id: string } = jwtDecode(token);
     const userId = decodedToken.id;
 
-    const createProjectPromise = fetch(
-      "http://localhost:3001/api/projects/create",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+    try {
+      const createProjectPromise = fetch(
+        "http://localhost:3001/api/projects/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name,
+            description,
+            userId,
+          }),
+        }
+      ).then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error);
+        }
+        return data;
+      });
+      toast.promise(createProjectPromise, {
+        loading: "Creating project...",
+        success: (data) => {
+          const newProject: Project = {
+            _id: data.projectId,
+            name,
+            description,
+            lastEdited: new Date().toISOString(),
+            endpoints: [],
+            type: "local",
+          };
+          setProjects([newProject, ...projects]);
+          setIsModalOpen(false);
+          return "Project created successfully!";
         },
-        body: JSON.stringify({
-          name,
-          description,
-          userId,
-        }),
-      }
-    ).then(async (res) => {
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "An error occurred");
-      }
-      return data;
-    });
-
-    toast.promise(createProjectPromise, {
-      loading: "Creating project...",
-      success: (data) => {
-        const newProject: Project = {
-          _id: data.projectId,
-          name,
-          description,
-          lastEdited: new Date().toISOString(),
-          endpoints: [],
-          type: "local",
-        };
-        setProjects([newProject, ...projects]);
-        setIsModalOpen(false);
-        return "Project created successfully!";
-      },
-      error: (err) => err.message,
-    });
+        error: (err) => err.message,
+      });
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   const handleGitHubImport = () => {

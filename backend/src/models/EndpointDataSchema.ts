@@ -15,7 +15,7 @@ export const endpointDataSchema = new mongoose.Schema({
     enum: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS", "ALL"],
     required: true,
   },
-  url: { type: String, required: true, unique: true },
+  url: { type: String, required: true },
   headers: { type: [String], required: true },
   requestDataType: {
     type: String,
