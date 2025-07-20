@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 import OrContinueWithBadge from "../components/auth/OrContinueWithBadge";
@@ -9,36 +10,45 @@ import AuthHeader from "../components/auth/AuthHeader";
 import AuthGithubButton from "../components/auth/AuthGithubButton";
 
 export function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");
-      return;
-    }
 
     setIsLoading(true);
 
-    // Simulate registration
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/dashboard");
-    }, 1000);
+    const registerPromise = fetch("http://localhost:3001/api/auth/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name, email, password }),
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "An error occurred");
+      }
+      return data;
+    });
+
+    toast.promise(registerPromise, {
+      loading: "Registering...",
+      success: () => {
+        navigate("/login");
+        return "Registered successfully!";
+      },
+      error: (err) => err.message,
+    });
+
+    setIsLoading(false);
   };
 
   const handleGitHubSignup = () => {
-    setIsLoading(true);
-    // Simulate GitHub OAuth
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("githubConnected", "true");
-      navigate("/dashboard");
-    }, 1500);
+    toast.error("Github authentication is coming soon");
   };
 
   return (
@@ -52,6 +62,15 @@ export function RegisterPage() {
           />
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            <InputField
+              id="name"
+              label="Name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your Name"
+              required
+            />
             <InputField
               id="email"
               label="Email address"
@@ -72,16 +91,6 @@ export function RegisterPage() {
               required
             />
 
-            <InputField
-              id="confirmPassword"
-              label="Confirm password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
-              required
-            />
-
             <PrimaryButton type="submit" disabled={isLoading}>
               {isLoading ? "Creating account..." : "Create account"}
             </PrimaryButton>
@@ -91,7 +100,7 @@ export function RegisterPage() {
             <AuthGithubButton
               handleGitHubLogin={handleGitHubSignup}
               isLoading={isLoading}
-              buttonText="Sign up with GitHub"
+              buttonText="Github Auth (Coming soon)"
             />
           </form>
 

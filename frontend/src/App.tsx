@@ -1,10 +1,11 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DashboardPage } from './pages/DashboardPage';
-import { CanvasPage } from './pages/CanvasPage';
-import { GitHubImportPage } from './pages/GitHubImportPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
+import { Toaster } from "react-hot-toast";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { LoginPage } from "./pages/LoginPage";
+import { RegisterPage } from "./pages/RegisterPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { CanvasPage } from "./pages/CanvasPage";
+import { GitHubImportPage } from "./pages/GitHubImportPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import "./App.css";
 
 function App() {
@@ -14,36 +15,37 @@ function App() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        
+
         {/* Protected routes */}
-        <Route 
-          path="/dashboard" 
+        <Route
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/canvas/:projectId" 
+        <Route
+          path="/canvas/:projectId"
           element={
             <ProtectedRoute>
               <CanvasPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        <Route 
-          path="/import" 
+        <Route
+          path="/import"
           element={
             <ProtectedRoute>
               <GitHubImportPage />
             </ProtectedRoute>
-          } 
+          }
         />
-        
+
         {/* Default redirect */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      <Toaster />;
     </BrowserRouter>
   );
 }

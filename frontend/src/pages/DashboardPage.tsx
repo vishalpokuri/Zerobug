@@ -1,63 +1,62 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { jwtDecode } from "jwt-decode";
 import SearchBar from "../components/dashboard/SearchBar";
 import ProjectCard from "../components/dashboard/ProjectCard";
 import QuickActions from "../components/dashboard/QuickActions";
 import ZerobugLogo from "../components/ZerobugLogo";
 import SystemStatusBadge from "../components/dashboard/SystemStatusBadge";
 import { SearchIcon } from "../Svg/Icons";
+import { CreateProjectModal } from "../components/dashboard/CreateProjectModal";
 
 interface Project {
-  id: string;
+  _id: string;
   name: string;
   lastEdited: string;
-  type: "local" | "github";
   description?: string;
-  routes?: number;
-  status?: "active" | "idle" | "error";
+  endpoints: any[];
+  type: "local" | "github";
 }
 
 export function DashboardPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [projects, setProjects] = useState<Project[]>([
-    {
-      id: "1",
-      name: "E-commerce API",
-      lastEdited: "2 hours ago",
-      type: "github",
-      description: "Main storefront backend API",
-      routes: 24,
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Payment Gateway",
-      lastEdited: "1 day ago",
-      type: "github",
-      description: "Stripe integration service",
-      routes: 8,
-      status: "idle",
-    },
-    {
-      id: "3",
-      name: "User Service",
-      lastEdited: "3 days ago",
-      type: "local",
-      description: "Authentication and user management",
-      routes: 12,
-      status: "error",
-    },
-    {
-      id: "4",
-      name: "Analytics Dashboard",
-      lastEdited: "1 week ago",
-      type: "local",
-      description: "Internal metrics and reporting",
-      routes: 16,
-      status: "idle",
-    },
-  ]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          navigate("/login");
+          return;
+        }
+        const decodedToken: { id: string } = jwtDecode(token);
+        const userId = decodedToken.id;
+
+        const response = await fetch(
+          `http://localhost:3001/api/projects/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        if (response.ok) {
+          setProjects(data.projects);
+        } else {
+          toast.error(data.error || "An error occurred");
+        }
+      } catch (error) {
+        toast.error("An error occurred");
+      }
+    };
+
+    fetchProjects();
+  }, [navigate]);
 
   const isGitHubConnected = localStorage.getItem("githubConnected") === "true";
   // const isGitHubConnected = false;
@@ -72,7 +71,7 @@ export function DashboardPage() {
   }, [projects, searchQuery]);
 
   const handleSignOut = () => {
-    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
     localStorage.removeItem("githubConnected");
     navigate("/login");
   };
@@ -82,16 +81,57 @@ export function DashboardPage() {
   };
 
   const handleNewProject = () => {
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name: "New Project",
-      lastEdited: "Just now",
-      type: "local",
-      description: "Newly created project",
-      routes: 0,
-      status: "idle",
-    };
-    setProjects([newProject, ...projects]);
+    setIsModalOpen(true);
+  };
+
+  const handleCreateProject = async (name: string, description: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    const decodedToken: { id: string } = jwtDecode(token);
+    const userId = decodedToken.id;
+
+    const createProjectPromise = fetch(
+      "http://localhost:3001/api/projects/create",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          userId,
+        }),
+      }
+    ).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "An error occurred");
+      }
+      return data;
+    });
+
+    toast.promise(createProjectPromise, {
+      loading: "Creating project...",
+      success: (data) => {
+        const newProject: Project = {
+          _id: data.projectId,
+          name,
+          description,
+          lastEdited: new Date().toISOString(),
+          endpoints: [],
+          type: "local",
+        };
+        setProjects([newProject, ...projects]);
+        setIsModalOpen(false);
+        return "Project created successfully!";
+      },
+      error: (err) => err.message,
+    });
   };
 
   const handleGitHubImport = () => {
@@ -241,8 +281,8 @@ export function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {filteredProjects.map((project) => (
                 <ProjectCard
-                  key={project.id}
-                  project={project}
+                  key={project._id}
+                  project={{ ...project, id: project._id }}
                   onClick={handleProjectClick}
                 />
               ))}
@@ -263,13 +303,16 @@ export function DashboardPage() {
             </div>
             <div>
               <div className="text-2xl font-rb text-white mb-1">
-                {projects.reduce((sum, p) => sum + (p.routes || 0), 0)}
+                {projects.reduce(
+                  (sum, p) => sum + (p.endpoints.length || 0),
+                  0
+                )}
               </div>
               <div className="text-sm text-gray-500 font-rr">Total Routes</div>
             </div>
             <div>
               <div className="text-2xl font-rb text-white mb-1">
-                {projects.filter((p) => p.status === "active").length}
+                {projects.filter((p) => p).length}
               </div>
               <div className="text-sm text-gray-500 font-rr">
                 Active Projects
@@ -286,6 +329,11 @@ export function DashboardPage() {
           </div>
         </div>
       </main>
+      <CreateProjectModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onCreate={handleCreateProject}
+      />
     </div>
   );
 }

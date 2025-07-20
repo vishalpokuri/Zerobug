@@ -1,4 +1,5 @@
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
 import OrContinueWithBadge from "../components/auth/OrContinueWithBadge";
@@ -18,21 +19,35 @@ export function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      navigate("/dashboard");
-    }, 1000);
+    const loginPromise = fetch("http://localhost:3001/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    }).then(async (res) => {
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "An error occurred");
+      }
+      return data;
+    });
+
+    toast.promise(loginPromise, {
+      loading: "Logging in...",
+      success: (data) => {
+        localStorage.setItem("token", data.token);
+        navigate("/dashboard");
+        return "Logged in successfully!";
+      },
+      error: (err) => err.message,
+    });
+
+    setIsLoading(false);
   };
 
   const handleGitHubLogin = () => {
-    setIsLoading(true);
-    // Simulate GitHub OAuth
-    setTimeout(() => {
-      localStorage.setItem("isAuthenticated", "true");
-      localStorage.setItem("githubConnected", "true");
-      navigate("/dashboard");
-    }, 1500);
+    toast.error("Github authentication is coming soon");
   };
 
   return (
@@ -72,6 +87,7 @@ export function LoginPage() {
             <AuthGithubButton
               handleGitHubLogin={handleGitHubLogin}
               isLoading={isLoading}
+              buttonText="Github Auth (Coming soon)"
             />
           </form>
 
