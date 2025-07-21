@@ -10,7 +10,7 @@ import { getStatusIcon } from "../../utils/utilityFunctions";
 
 import { ConnectionStatus } from "../../types/declarations";
 import CodeBlock from "../ui/CodeBlock";
-import type React from "react";
+import React from "react";
 
 interface CLIConnectionModalProps {
   isOpen: boolean;
@@ -154,10 +154,16 @@ export function CLIConnectionModal({
   onClose,
   projectId = "your-project",
 }: CLIConnectionModalProps) {
-  const { status, connect, disconnect, setStatus, retryCount } =
-    useWebSocketContext();
+  const {
+    status,
+    connect,
+    disconnect,
+    setStatus,
+    retryCount,
+    backendPort,
+    setBackendPort,
+  } = useWebSocketContext();
 
-  const backendPort = "3000"; // Default backend port, can be made configurable
   const command = `zerobug sniff --id=${projectId} --backend=${backendPort}`;
 
   const handleConnect = () => {
@@ -207,6 +213,23 @@ export function CLIConnectionModal({
                         Run this command in your terminal to start the CLI
                         application
                       </p>
+                    </div>
+                    {/* Port Input */}
+                    <div className="my-4 flex gap-5 items-center">
+                      <label
+                        htmlFor="backend-port"
+                        className="block text-sm font-medium text-gray-300 mb-2 w-2/5"
+                      >
+                        Backend Port
+                      </label>
+                      <input
+                        type="text"
+                        id="backend-port"
+                        value={backendPort}
+                        onChange={(e) => setBackendPort(e.target.value)}
+                        className="w-full px-3 py-2 bg-[#141414] border border-gray-600 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                        placeholder="e.g., 3000"
+                      />
                     </div>
 
                     {/* CLI Command to copy*/}
@@ -340,13 +363,14 @@ export function CLIConnectionModal({
 
 function InstructionsSection() {
   return (
-    <div className="text-left bg-gray-800/50 rounded-lg p-4 mb-6">
-      <h4 className="text-sm font-medium text-white mb-2">Steps:</h4>
-      <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
-        <li>Copy the command above</li>
-        <li>Paste and run it in your terminal</li>
-        <li>Click "Connect" below once the CLI is running</li>
-      </ol>
-    </div>
+    // <div className="text-left bg-gray-800/50 rounded-lg p-4 mb-6">
+    //   <h4 className="text-sm font-medium text-white mb-2">Steps:</h4>
+    //   <ol className="text-xs text-gray-400 space-y-1 list-decimal list-inside">
+    //     <li>Copy the command above</li>
+    //     <li>Paste and run it in your terminal</li>
+    //     <li>Click "Connect" below once the CLI is running</li>
+    //   </ol>
+    // </div>
+    <></>
   );
 }

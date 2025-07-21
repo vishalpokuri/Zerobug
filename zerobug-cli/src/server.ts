@@ -3,6 +3,7 @@ import figlet from "figlet";
 import chokidar from "chokidar";
 import { getBackendCode, getBackendFilePath } from "./astParserHelpers";
 import { parseExpressRoutes } from "./astParser";
+import fetch from "node-fetch";
 
 const clients = new Map<string, WebSocket[]>(); // id -> [sockets]
 
@@ -67,11 +68,42 @@ export async function startWebSocketServer(projectId: string) {
 
     parseAndSendRoutes(clientId);
 
-    ws.on("message", (data) => {
+    ws.on("message", async (data) => {
       try {
         const message = JSON.parse(data.toString());
         if (message.type === "ping") {
           ws.send(JSON.stringify({ type: "pong" }));
+        } else if (message.type === "request_test") {
+          const { method, path, headers, body } = message.requestData;
+          const { backendPort } = message;
+          try {
+            const response = await fetch(
+              `http://localhost:${backendPort}${path}`,
+              {
+                method,
+                headers,
+                body: body ? JSON.stringify(body) : undefined,
+              }
+            );
+
+            const resBody = await response.text();
+
+            ws.send(
+              JSON.stringify({
+                type: "response_result",
+                status: response.status,
+                headers: Object.fromEntries(response.headers.entries()),
+                body: resBody,
+              })
+            );
+          } catch (err: any) {
+            ws.send(
+              JSON.stringify({
+                type: "response_result",
+                error: err.message,
+              })
+            );
+          }
         } else {
           ws.send(JSON.stringify({ type: "received", payload: message }));
         }

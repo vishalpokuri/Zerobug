@@ -57,7 +57,7 @@ function Canvas() {
       setEdges((eds) => applyEdgeChanges(changes, eds)),
     [setEdges]
   );
-  const [showCLIModal, setShowCLIModal] = useState(false);
+  const [showCLIModal, setShowCLIModal] = useState(true);
   const { lastMessage, isConnected } = useWebSocketContext();
   const [endpoints, setEndpoints] = useState<ParsedEndpoint[]>([]);
 
@@ -190,7 +190,7 @@ function Canvas() {
           />
           <Background
             variant={BackgroundVariant.Cross}
-            bgColor="#030018"
+            bgColor="#040404"
             gap={64}
             size={0.7}
             color="#fff"

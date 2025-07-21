@@ -48,8 +48,8 @@ export function CustomNode({ data, selected }: NodeProps) {
     <div
       className={`bg-gray-900 border-2 rounded-lg shadow-lg relative transition-all duration-300`}
       style={{
-        width: currentView === "simple" ? "320px" : "650px",
-        height: currentView === "simple" ? "220px" : "450px",
+        width: currentView === "simple" ? "320px" : "900px",
+        height: currentView === "simple" ? "220px" : "650px",
       }}
     >
       {/* UI Switcher */}

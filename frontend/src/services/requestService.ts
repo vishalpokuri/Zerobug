@@ -8,13 +8,80 @@ export interface RequestResponse {
   error?: string;
 }
 
+export function sendRequestViaProxy(
+  endpointData: ParsedEndpoint,
+  requestData: RequestDataState,
+  backendPort: string,
+  sendMessage: (message: string) => void
+) {
+  let requestUrl = endpointData.url;
+
+  // Replace URL params with actual values
+  requestData.params
+    .filter((p) => p.enabled && p.key && p.value)
+    .forEach((p) => {
+      requestUrl = requestUrl.replace(`:${p.key}`, p.value);
+    });
+
+  // Add query parameters
+  const enabledQueryParams = requestData.queryParams.filter(
+    (p) => p.enabled && p.key && p.value
+  );
+  if (enabledQueryParams.length > 0) {
+    const searchParams = new URLSearchParams();
+    enabledQueryParams.forEach((p) => searchParams.append(p.key, p.value));
+    requestUrl += `?${searchParams.toString()}`;
+  }
+
+  // Build headers
+  const requestHeaders: Record<string, string> = {};
+  requestData.headers
+    .filter((h) => h.enabled && h.key && h.value)
+    .forEach((h) => (requestHeaders[h.key] = h.value));
+
+  let body = undefined;
+  // Add body for methods that support it
+  if (["POST", "PUT", "PATCH"].includes(endpointData.method)) {
+    if (
+      endpointData.requestDataType === "body" &&
+      requestData.bodyParams.length > 0
+    ) {
+      const bodyData: Record<string, string> = {};
+      requestData.bodyParams
+        .filter((p) => p.enabled && p.key && p.value)
+        .forEach((p) => (bodyData[p.key] = p.value));
+      body = bodyData;
+      requestHeaders["Content-Type"] = "application/json";
+    } else if (requestData.body) {
+      body = JSON.parse(requestData.body);
+      if (!requestHeaders["Content-Type"]) {
+        requestHeaders["Content-Type"] = "application/json";
+      }
+    }
+  }
+
+  const message = {
+    type: "request_test",
+    requestData: {
+      method: endpointData.method,
+      path: requestUrl,
+      headers: requestHeaders,
+      body: body,
+    },
+    backendPort,
+  };
+
+  sendMessage(JSON.stringify(message));
+}
+
 export async function sendRequest(
   endpointData: ParsedEndpoint,
-  requestData: RequestDataState
+  requestData: RequestDataState,
+  backendPort: string
 ): Promise<RequestResponse> {
   try {
     // Build URL with params and query params
-    let requestUrl = endpointData.url;
+    let requestUrl = `http://localhost:${backendPort}${endpointData.url}`;
 
     // Replace URL params with actual values
     requestData.params
@@ -66,6 +133,7 @@ export async function sendRequest(
       options.headers = requestHeaders;
     }
 
+    console.log(requestUrl, options);
     const response = await fetch(requestUrl, options);
     const responseData = await response.text();
 

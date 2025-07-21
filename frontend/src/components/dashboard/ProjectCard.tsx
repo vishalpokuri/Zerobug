@@ -13,7 +13,7 @@ interface Project {
   lastEdited: string;
   type: "local" | "github";
   description?: string;
-  routes?: number;
+  endpoints?: Array<Record<string, any>>;
   lastActivity?: string;
   status?: "active" | "idle" | "error";
 }
@@ -79,7 +79,9 @@ export default function ProjectCard({ project, onClick }: ProjectCardProps) {
       <div className="flex items-center gap-4 mb-4 text-sm text-gray-500">
         <div className="flex items-center gap-1">
           <LightningIcon className="w-4 h-4" />
-          <span className="font-rm">{project.routes || 0} routes</span>
+          <span className="font-rm">
+            {project.endpoints!.length || 0} routes
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <ClockIcon className="w-4 h-4" />

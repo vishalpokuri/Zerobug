@@ -10,6 +10,8 @@ interface UseWebSocketConnectionReturn {
   setStatus: (status: ConnectionStatus) => void;
   retryCount: number;
   isConnected: boolean;
+  backendPort: string;
+  setBackendPort: (port: string) => void;
 }
 
 interface useWSProps {
@@ -34,6 +36,7 @@ export function useWebSocketConnection({
   );
   const [lastMessage, setLastMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
+  const [backendPort, setBackendPort] = useState<string>("3000");
   const wsRef = useRef<WebSocket | null>(null);
   const isManualDisconnect = useRef<boolean>(false);
   const maxRetries = 3;
@@ -203,6 +206,8 @@ export function useWebSocketConnection({
     setStatus,
     retryCount,
     isConnected: status === ConnectionStatus.CONNECTED,
+    backendPort,
+    setBackendPort,
   };
 }
 export { ConnectionStatus };

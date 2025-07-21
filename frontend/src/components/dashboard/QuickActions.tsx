@@ -47,6 +47,7 @@ function GitHubButton({
     return (
       <button
         onClick={handleClick}
+        disabled
         className="p-6 rounded-xl border text-left transition-all duration-200 relative overflow-hidden group bg-[#1a1a1a] border-gray-800 text-white hover:border-gray-700 card-hover"
       >
         <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
@@ -68,6 +69,7 @@ function GitHubButton({
   return (
     <button
       onClick={handleClick}
+      disabled
       className="p-6 rounded-xl border text-left transition-all duration-200 relative overflow-hidden group bg-gradient-to-br from-red-950/30 to-orange-950/30 border-red-800/40 text-white hover:border-red-700/60 card-hover"
     >
       <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />

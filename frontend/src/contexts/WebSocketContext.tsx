@@ -11,6 +11,8 @@ interface WebSocketContextType {
   setStatus: (status: ConnectionStatus) => void;
   retryCount: number;
   isConnected: boolean;
+  backendPort: string;
+  setBackendPort: (port: string) => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(
