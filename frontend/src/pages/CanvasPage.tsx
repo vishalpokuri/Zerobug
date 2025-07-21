@@ -66,7 +66,7 @@ function Canvas() {
       if (projectId && !isConnected) {
         try {
           const response = await fetch(
-            `http://localhost:3001/api/project/${projectId}`
+            `https://backend.canum.xyz/api3/api/project/${projectId}`
           );
           if (response.ok) {
             const data = await response.json();
@@ -107,13 +107,16 @@ function Canvas() {
 
   const handleSave = async () => {
     try {
-      const response = await fetch("http://localhost:3001/api/project/save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ projectId, endpoints }),
-      });
+      const response = await fetch(
+        "https://backend.canum.xyz/api3/api/project/save",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ projectId, endpoints }),
+        }
+      );
 
       if (response.ok) {
         toast.success("Project saved successfully!");
