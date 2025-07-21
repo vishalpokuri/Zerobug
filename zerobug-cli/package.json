@@ -1,17 +1,27 @@
 {
   "name": "zerobug-cli",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "Zerobug CLI tool for connecting your frontend to local backend debugging",
+  "author": "Vishal Pokuri",
+  "main": "dist/program.js",
+  "keywords": [
+    "zerobug",
+    "debugger",
+    "cli",
+    "typescript",
+    "websocket",
+    "backend"
+  ],
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
   "packageManager": "pnpm@10.13.1",
   "bin": {
     "zerobug": "dist/program.js"
   },
   "scripts": {
-    "build": "tsup src/astParser.ts && tsup src/program.ts",
+    "build": "tsup src/astParser.ts src/program.ts",
     "dev": "tsup --watch",
     "start": "node dist/program.js"
   },
