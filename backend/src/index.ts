@@ -19,11 +19,35 @@ const connectDB = async () => {
 
 const app = express();
 
+// ✅ Only allow production frontend
 app.use(
   cors({
-    origin: "*",
+    origin: "https://app.zerobug.tech",
   })
 );
+
+// ✅ Handle preflight for all routes
+app.options(
+  "*",
+  cors({
+    origin: "https://app.zerobug.tech",
+  })
+);
+
+// ✅ Testing
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//   })
+// );
+
+// // ✅ Handle preflight for all routes
+// app.options(
+//   "*",
+//   cors({
+//     origin: "http://localhost:5173",
+//   })
+// );
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);

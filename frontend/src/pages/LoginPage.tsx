@@ -8,6 +8,7 @@ import PrimaryButton from "../components/auth/PrimaryButton";
 import AuthFooter from "../components/auth/AuthFooter";
 import AuthHeader from "../components/auth/AuthHeader";
 import AuthGithubButton from "../components/auth/AuthGithubButton";
+import { ROOT_URL } from "../utils/backendURL";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,16 +20,13 @@ export function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const loginPromise = fetch(
-      "https://backend.canum.xyz/api3/api/auth/login",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      }
-    ).then(async (res) => {
+    const loginPromise = fetch(`${ROOT_URL}/api/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    }).then(async (res) => {
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.error || "An error occurred");

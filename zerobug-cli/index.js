@@ -46,7 +46,7 @@ app.put("/api/user/profile/:id", (req, res) => {
 
 // Data endpoints
 app.get("/api/data/fetch", (req, res) => {
-  const { limit = 10, offset = 0 } = req.query;
+  const { limit = 10, offset = 0, name } = req.query;
   res.json({
     data: Array.from({ length: parseInt(limit) }, (_, i) => ({
       id: parseInt(offset) + i + 1,

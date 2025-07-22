@@ -9,6 +9,7 @@ import ZerobugLogo from "../components/ZerobugLogo";
 import SystemStatusBadge from "../components/dashboard/SystemStatusBadge";
 import { SearchIcon } from "../Svg/Icons";
 import { CreateProjectModal } from "../components/modals/CreateProjectModal";
+import { ROOT_URL } from "../utils/backendURL";
 
 interface Project {
   _id: string;
@@ -36,14 +37,11 @@ export function DashboardPage() {
         const decodedToken: { id: string } = jwtDecode(token);
         const userId = decodedToken.id;
 
-        const response = await fetch(
-          `https://backend.canum.xyz/api3/api/project/user/${userId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        const response = await fetch(`${ROOT_URL}/api/project/user/${userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         const data = await response.json();
         if (response.ok) {
           setProjects(data.projects);
@@ -94,21 +92,18 @@ export function DashboardPage() {
     const userId = decodedToken.id;
 
     try {
-      const createProjectPromise = fetch(
-        "https://backend.canum.xyz/api3/api/project/create",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name,
-            description,
-            userId,
-          }),
-        }
-      ).then(async (res) => {
+      const createProjectPromise = fetch(`${ROOT_URL}/api/project/create`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name,
+          description,
+          userId,
+        }),
+      }).then(async (res) => {
         const data = await res.json();
         if (!res.ok) {
           throw new Error(data.error);
@@ -139,6 +134,95 @@ export function DashboardPage() {
 
   const handleGitHubImport = () => {
     navigate("/import");
+  };
+
+  const handleEditProject = async (
+    projectId: string,
+    name: string,
+    description: string
+  ) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const editProjectPromise = fetch(`${ROOT_URL}/api/project/${projectId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name, description }),
+      }).then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to update project");
+        }
+        return res.json();
+      });
+
+      toast.promise(editProjectPromise, {
+        loading: "Updating project...",
+        success: () => {
+          setProjects((prevProjects) =>
+            prevProjects.map((p) =>
+              p._id === projectId ? { ...p, name, description } : p
+            )
+          );
+          return "Project updated successfully!";
+        },
+        error: (err) => err.message,
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("An error occurred while updating the project.");
+    }
+  };
+
+  const handleDeleteProject = async (projectId: string) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    const decodedToken: { id: string } = jwtDecode(token);
+    const userId = decodedToken.id;
+
+    try {
+      const deleteProjectPromise = fetch(
+        `${ROOT_URL}/api/project/${projectId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ userId }),
+        }
+      ).then(async (res) => {
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to delete project");
+        }
+        return res.json();
+      });
+
+      toast.promise(deleteProjectPromise, {
+        loading: "Deleting project...",
+        success: () => {
+          setProjects((prevProjects) =>
+            prevProjects.filter((p) => p._id !== projectId)
+          );
+          return "Project deleted successfully!";
+        },
+        error: (err) => err.message,
+      });
+    } catch (e) {
+      console.error(e);
+      toast.error("An error occurred while deleting the project.");
+    }
   };
 
   const handleConnectGitHub = () => {
@@ -287,6 +371,8 @@ export function DashboardPage() {
                   key={project._id}
                   project={{ ...project, id: project._id }}
                   onClick={handleProjectClick}
+                  onEdit={handleEditProject}
+                  onDelete={handleDeleteProject}
                 />
               ))}
             </div>

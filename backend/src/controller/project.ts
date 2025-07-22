@@ -62,3 +62,43 @@ export const getProjectById = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Error getting project" });
   }
 };
+
+export const updateProject = async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const { name, description } = req.body;
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    project.name = name;
+    project.description = description;
+    project.lastEdited = new Date();
+    await project.save();
+    res.status(200).json({ message: "Project updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error updating project" });
+  }
+};
+
+export const deleteProject = async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const { userId } = req.body;
+    const project = await Project.findById(projectId);
+    if (!project) {
+      return res.status(404).json({ error: "Project not found" });
+    }
+    await project.deleteOne();
+    const user = await User.findById(userId);
+    if (user) {
+      user.projects = user.projects.filter(
+        (id) => id.toString() !== projectId
+      );
+      await user.save();
+    }
+    res.status(200).json({ message: "Project deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error deleting project" });
+  }
+};
