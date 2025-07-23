@@ -5,7 +5,7 @@ import {
   LightningIcon,
   ClockIcon,
   ArrowRightIcon,
-  MoreVerticalIcon,
+  PencilIcon,
 } from "../../Svg/Icons";
 import { formatTimeAgo } from "../../utils/time";
 import { EditProjectModal } from "../modals/EditProjectModal";
@@ -69,9 +69,7 @@ export default function ProjectCard({
 
   return (
     <>
-      <div
-        className="bg-[#1a1a1a] rounded-xl border border-gray-800 p-6 card-hover group relative overflow-hidden"
-      >
+      <div className="bg-[#1a1a1a] rounded-xl border border-gray-800 p-6 card-hover group relative overflow-hidden">
         {/* Subtle noise overlay */}
         <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
 
@@ -89,9 +87,9 @@ export default function ProjectCard({
                 e.stopPropagation();
                 setMenuOpen(!isMenuOpen);
               }}
-              className="text-gray-400 hover:text-white"
+              className="text-gray-400 hover:text-white pt-2"
             >
-              <MoreVerticalIcon className="w-5 h-5" />
+              <PencilIcon className="size-4" />
             </button>
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-[#2a2a2a] border border-gray-700 rounded-md shadow-lg z-10">
@@ -121,10 +119,7 @@ export default function ProjectCard({
         </div>
 
         {/* Project header */}
-        <div
-          onClick={() => onClick(project.id)}
-          className="cursor-pointer"
-        >
+        <div onClick={() => onClick(project.id)} className="cursor-pointer">
           <div className="flex items-start gap-3 mb-4">
             <div className="p-2 bg-[#2a2a2a] rounded-lg text-gray-400 group-hover:text-yellow-400 transition-colors">
               {getTypeIcon(project.type)}
@@ -149,7 +144,9 @@ export default function ProjectCard({
             </div>
             <div className="flex items-center gap-1">
               <ClockIcon className="w-4 h-4" />
-              <span className="font-rm">{formatTimeAgo(project.lastEdited)}</span>
+              <span className="font-rm">
+                {formatTimeAgo(project.lastEdited)}
+              </span>
             </div>
           </div>
 

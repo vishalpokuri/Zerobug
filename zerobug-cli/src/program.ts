@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { startWebSocketServer } from "./server";
+import { startZerobugClient } from "./client";
 import fs from "fs";
 import path from "path";
 
@@ -37,10 +37,10 @@ program
 // SNIFF command
 program
   .command("sniff")
-  .description("Start Zerobug WebSocket server and sniff")
+  .description("Start Zerobug client and connect to relay")
   .option("--id <id>", "Override project ID")
   .option("--backend <port>", "Override backend port")
-  .action((options) => {
+  .action(async (options) => {
     // Load existing config (if exists)
     const existingConfig = loadConfig();
 
@@ -62,8 +62,15 @@ program
     // Save the updated config
     saveConfig(updatedConfig);
 
-    // Start the server
-    startWebSocketServer(updatedConfig.projectId);
+    // Zerobug relay URL is constant - always port 3401
+    const relayUrl = "ws://localhost:3401/ws";
+
+    // Start the client
+    await startZerobugClient(
+      updatedConfig.projectId, 
+      updatedConfig.backendPort,
+      relayUrl
+    );
   });
 
 program.parse();

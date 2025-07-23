@@ -22,14 +22,14 @@ interface useWSProps {
 
 export function useWebSocketConnection({
   id,
-  frontend,
-  backend,
 }: useWSProps): UseWebSocketConnectionReturn {
-  const baseUrl = "ws://localhost:9229";
-  const idString = id ? `id=${id}` : "";
-  const frontendString = frontend ? `&frontend=${frontend}` : "";
-  const backendString = backend ? `&backend=${backend}` : "";
-  const url = `${baseUrl}?${idString}${frontendString}${backendString}`;
+  // Use backend relay instead of localhost
+  const baseUrl = import.meta.env.PROD
+    ? "wss://backend.canum.xyz/api3/ws"
+    : "ws://localhost:3401/ws";
+  const projectIdParam = id ? `projectId=${id}` : "";
+  const typeParam = "type=frontend";
+  const url = `${baseUrl}?${projectIdParam}&${typeParam}`;
 
   const [status, setStatus] = useState<ConnectionStatus>(
     ConnectionStatus.DISCONNECTED
