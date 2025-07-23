@@ -62,8 +62,8 @@ program
     // Save the updated config
     saveConfig(updatedConfig);
 
-    // Zerobug relay URL is constant - always port 3401
-    const relayUrl = "ws://localhost:3401/ws";
+    // Zerobug relay URL - connect to hosted backend
+    const relayUrl = "wss://backend.canum.xyz/api3/ws";
 
     // Start the client
     await startZerobugClient(
