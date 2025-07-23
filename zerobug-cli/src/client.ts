@@ -4,6 +4,8 @@ import { parseExpressRoutes } from "./astParser";
 import chokidar, { FSWatcher } from "chokidar";
 import figlet from "figlet";
 import fetch from "node-fetch";
+import { Logger } from "./logger";
+import * as readline from "readline";
 
 interface ClientConfig {
   projectId: string;
@@ -14,9 +16,13 @@ interface ClientConfig {
 class ZerobugClient {
   private ws: WebSocket | null = null;
   private config: ClientConfig;
-  private reconnectInterval: NodeJS.Timeout | null = null;
-  private isReconnecting = false;
+  private reconnectTimer: NodeJS.Timeout | null = null;
+  private connectionTimeout: NodeJS.Timeout | null = null;
+  private isConnecting = false;
   private watcher: FSWatcher | null = null;
+  private retryCount = 0;
+  private maxRetries = 5;
+  private isShuttingDown = false;
 
   constructor(config: ClientConfig) {
     this.config = {
@@ -33,7 +39,12 @@ class ZerobugClient {
     await this.startFileWatching();
 
     // Connect to relay
-    this.connect();
+    try {
+      await this.connect();
+    } catch (err: any) {
+      Logger.error(`Initial connection failed: ${err.message}`);
+      await this.scheduleReconnect();
+    }
   }
 
   private async showLogo() {
@@ -57,69 +68,180 @@ class ZerobugClient {
       });
 
       this.watcher.on("change", () => {
-        console.log(`🔄️ File changed, reparsing and sending routes...`);
+        Logger.watcher("File changed, reparsing routes");
         this.parseAndSendRoutes();
       });
 
-      console.log(`👀 Watching files at: ${filePath}`);
+      Logger.watcher(`Watching: ${filePath}`);
     } catch (error) {
       console.error("Error setting up file watcher:", error);
     }
   }
 
-  private connect() {
-    if (this.isReconnecting) return;
+  private async connect(): Promise<void> {
+    if (this.isConnecting || this.isShuttingDown) {
+      return;
+    }
+
+    this.isConnecting = true;
+    this.cleanupConnection();
 
     const url = `${this.config.relayUrl}?projectId=${this.config.projectId}&type=cli`;
-    console.log(`🔗 Connecting to relay: ${url}`);
+    Logger.connection(
+      `Connecting to relay (attempt ${this.retryCount + 1}/${this.maxRetries})`
+    );
 
-    this.ws = new WebSocket(url);
+    return new Promise((resolve, reject) => {
+      let connectionResolved = false;
 
-    this.ws.on("open", () => {
-      console.log(
-        `✅ Connected to Zerobug relay for project: ${this.config.projectId}`
-      );
-      this.isReconnecting = false;
-
-      if (this.reconnectInterval) {
-        clearInterval(this.reconnectInterval);
-        this.reconnectInterval = null;
-      }
-
-      // Send initial routes
-      this.parseAndSendRoutes();
-    });
-
-    this.ws.on("message", async (data: Buffer) => {
       try {
-        const message = JSON.parse(data.toString());
-        await this.handleMessage(message);
+        this.ws = new WebSocket(url);
       } catch (error) {
-        console.error("Error parsing message:", error);
+        this.isConnecting = false;
+        reject(error);
+        return;
       }
-    });
 
-    this.ws.on("close", (code, reason) => {
-      console.log(`❌ Connection closed: ${code} - ${reason.toString()}`);
-      this.ws = null;
-      this.scheduleReconnect();
-    });
+      // 4-second connection timeout
+      this.connectionTimeout = setTimeout(() => {
+        if (!connectionResolved) {
+          connectionResolved = true;
+          Logger.error("Connection timeout after 4 seconds");
+          this.cleanupConnection();
+          this.isConnecting = false;
+          reject(new Error("Connection timeout"));
+        }
+      }, 4000);
 
-    this.ws.on("error", (error) => {
-      console.error("WebSocket error:", error);
+      this.ws.on("open", () => {
+        if (!connectionResolved) {
+          connectionResolved = true;
+          this.clearTimeouts();
+          Logger.connection("Connected to relay successfully");
+          this.isConnecting = false;
+          this.retryCount = 0;
+          this.parseAndSendRoutes();
+          resolve();
+        }
+      });
+
+      this.ws.on("message", async (data: Buffer) => {
+        try {
+          const message = JSON.parse(data.toString());
+          await this.handleMessage(message);
+        } catch (error) {
+          Logger.error(`Error parsing message: ${error}`);
+        }
+      });
+
+      this.ws.on("close", (code) => {
+        if (!connectionResolved) {
+          connectionResolved = true;
+          this.clearTimeouts();
+          this.isConnecting = false;
+          reject(new Error(`Connection closed (${code})`));
+        } else {
+          this.clearTimeouts();
+          Logger.connection(`Connection closed (${code})`);
+          this.isConnecting = false;
+
+          if (!this.isShuttingDown) {
+            this.scheduleReconnect();
+          }
+        }
+      });
+
+      this.ws.on("error", (error) => {
+        if (!connectionResolved) {
+          connectionResolved = true;
+          this.clearTimeouts();
+          this.isConnecting = false;
+          this.cleanupConnection();
+          reject(error);
+        }
+      });
     });
   }
 
-  private scheduleReconnect() {
-    if (this.isReconnecting) return;
+  private cleanupConnection() {
+    if (this.ws) {
+      this.ws.removeAllListeners();
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.close(1000, "Reconnecting");
+      } else {
+        this.ws.terminate();
+      }
+      this.ws = null;
+    }
+  }
 
-    this.isReconnecting = true;
-    console.log("🔄 Scheduling reconnection in 5 seconds...");
+  private clearTimeouts() {
+    if (this.connectionTimeout) {
+      clearTimeout(this.connectionTimeout);
+      this.connectionTimeout = null;
+    }
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+  }
 
-    this.reconnectInterval = setTimeout(() => {
-      console.log("🔄 Attempting to reconnect...");
-      this.connect();
-    }, 5000);
+  private async scheduleReconnect() {
+    if (this.isShuttingDown || this.isConnecting) {
+      return;
+    }
+
+    this.retryCount++;
+
+    if (this.retryCount > this.maxRetries) {
+      Logger.error(`Max retry attempts (${this.maxRetries}) reached`);
+      await this.promptForRetry();
+      return;
+    }
+
+    Logger.retry(`Retry ${this.retryCount}/${this.maxRetries} in 4 seconds`);
+
+    this.reconnectTimer = setTimeout(async () => {
+      try {
+        await this.connect();
+      } catch (error) {
+        // Connection failed, schedule next retry
+        if (!this.isShuttingDown) {
+          await this.scheduleReconnect();
+        }
+      }
+    }, 4000);
+  }
+
+  private async promptForRetry(): Promise<void> {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    return new Promise<void>((resolve) => {
+      rl.question(
+        "\nDo you want to retry connecting? (y/n): ",
+        async (answer) => {
+          rl.close();
+
+          if (answer.toLowerCase() === "y" || answer.toLowerCase() === "yes") {
+            Logger.connection("Retrying connection...");
+            this.retryCount = 0;
+            try {
+              await this.connect();
+            } catch (error) {
+              Logger.error("Retry failed, will continue retrying...");
+            }
+          } else {
+            Logger.error("Connection abandoned by user");
+            this.isShuttingDown = true;
+            process.exit(1);
+          }
+          resolve();
+        }
+      );
+    });
   }
 
   private async handleMessage(message: any) {
@@ -128,8 +250,6 @@ class ZerobugClient {
         this.send({ type: "pong" });
       } else if (message.type === "request_test") {
         await this.handleRequestTest(message);
-      } else {
-        console.log("📥 Received message:", message.type || "unknown");
       }
     } catch (error) {
       console.error("Error handling message:", error);
@@ -141,7 +261,7 @@ class ZerobugClient {
     const backendPort = this.config.backendPort;
 
     try {
-      console.log(`🚀 Testing ${method} ${path} on port ${backendPort}`);
+      Logger.request(`Testing ${method} ${path}`);
 
       const response = await fetch(`http://localhost:${backendPort}${path}`, {
         method,
@@ -158,9 +278,9 @@ class ZerobugClient {
         body: resBody,
       });
 
-      console.log(`✅ Response: ${response.status}`);
+      Logger.success(`Response: ${response.status}`);
     } catch (err: any) {
-      console.error(`❌ Request failed: ${err.message}`);
+      Logger.error(`Request failed: ${err.message}`);
 
       this.send({
         type: "response_result",
@@ -180,9 +300,9 @@ class ZerobugClient {
         projectId: this.config.projectId,
       });
 
-      console.log(`📤 Sent ${routes.length || 0} routes to relay`);
+      Logger.routes(`Sent ${routes.length || 0} routes to relay`);
     } catch (error) {
-      console.error("Error parsing and sending routes:", error);
+      Logger.error(`Failed to parse routes: ${error}`);
     }
   }
 
@@ -195,24 +315,18 @@ class ZerobugClient {
   }
 
   public stop() {
-    console.log("🛑 Stopping Zerobug client...");
+    Logger.connection("Stopping client");
+    this.isShuttingDown = true;
 
-    if (this.reconnectInterval) {
-      clearInterval(this.reconnectInterval);
-      this.reconnectInterval = null;
-    }
+    this.clearTimeouts();
 
     if (this.watcher) {
       this.watcher.close();
       this.watcher = null;
     }
 
-    if (this.ws) {
-      this.ws.close(1000, "Client shutdown");
-      this.ws = null;
-    }
-
-    console.log("✅ Zerobug client stopped");
+    this.cleanupConnection();
+    Logger.success("Client stopped");
   }
 }
 

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import readline from "readline";
 import { execSync } from "child_process";
+import { Logger } from "./logger";
 
 /**
  * Search patterns that indicate an Express backend file
@@ -86,7 +87,7 @@ export async function getBackendFilePath(): Promise<string> {
     console.log("❌ Could not find backend file automatically.");
     backendPath = await promptForBackendPath();
   } else {
-    console.log(`⚙️ Parsing backend file: ${backendPath}`);
+    Logger.parsing(`Parsing backend file: ${backendPath}`);
   }
 
   if (!fs.existsSync(backendPath)) {

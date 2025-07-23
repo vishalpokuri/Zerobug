@@ -13,10 +13,17 @@ interface FrontendConnection {
   isAlive: boolean;
 }
 
+interface ProjectData {
+  routes?: any[];
+  lastUpdate?: Date;
+  metadata?: any;
+}
+
 class WebSocketRelay {
   private wss: WebSocketServer;
   private cliConnections = new Map<string, CliConnection>(); // projectId -> CLI connection
   private frontendConnections = new Map<string, FrontendConnection[]>(); // projectId -> frontend connections
+  private projectData = new Map<string, ProjectData>(); // projectId -> latest data from CLI
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({
@@ -40,7 +47,7 @@ class WebSocketRelay {
       }
 
       console.log(
-        `🔗 ${clientType.toUpperCase()} connected for project: ${projectId}`
+        `\x1b[36m\x1b[1m[CONNECTION]\x1b[0m \x1b[37m${clientType.toUpperCase()} connected (${projectId})\x1b[0m`
       );
 
       if (clientType === "cli") {
@@ -73,6 +80,9 @@ class WebSocketRelay {
       try {
         const message = JSON.parse(data.toString());
 
+        // Store latest data from CLI
+        this.storeProjectData(projectId, message);
+
         // Forward CLI messages to all connected frontends for this project
         const frontendConnections =
           this.frontendConnections.get(projectId) || [];
@@ -81,12 +91,16 @@ class WebSocketRelay {
         });
 
         console.log(
-          `📤 CLI -> Frontend: ${
+          `\x1b[33m\x1b[1m[RELAY]\x1b[0m \x1b[37mCLI → Frontend: ${
             message.type || "unknown"
-          } for project ${projectId}`
+          }\x1b[0m`
         );
       } catch (error) {
-        console.error("Invalid JSON from CLI:", error);
+        console.log(
+          `\x1b[31m\x1b[1m[ERROR]\x1b[0m \x1b[37mInvalid JSON from CLI: ${
+            error instanceof Error ? error.message : String(error)
+          }\x1b[0m`
+        );
       }
     });
 
@@ -96,7 +110,9 @@ class WebSocketRelay {
 
     ws.on("close", () => {
       this.cliConnections.delete(projectId);
-      console.log(`❌ CLI disconnected from project: ${projectId}`);
+      console.log(
+        `\x1b[31m\x1b[1m[DISCONNECT]\x1b[0m \x1b[37mCLI disconnected from project: ${projectId}\x1b[0m`
+      );
 
       // Notify frontend connections that CLI is disconnected
       const frontendConnections = this.frontendConnections.get(projectId) || [];
@@ -109,7 +125,9 @@ class WebSocketRelay {
     });
 
     ws.on("error", (error) => {
-      console.error(`CLI WebSocket error for project ${projectId}:`, error);
+      console.log(
+        `\x1b[31m\x1b[1m[ERROR]\x1b[0m \x1b[37mCLI WebSocket error for project ${projectId}: ${error.message}\x1b[0m`
+      );
     });
 
     // Notify frontend connections that CLI is connected
@@ -127,6 +145,65 @@ class WebSocketRelay {
     if (frontend.socket.readyState === WebSocket.OPEN) {
       frontend.socket.send(JSON.stringify(data));
     }
+  }
+
+  // Store latest data from CLI for each project
+  private storeProjectData(projectId: string, message: any) {
+    if (!this.projectData.has(projectId)) {
+      this.projectData.set(projectId, {});
+    }
+
+    const projectData = this.projectData.get(projectId)!;
+
+    // Store different types of data
+    if (message.type === "routes_update" && message.routes) {
+      projectData.routes = message.routes;
+    }
+
+    // Always update timestamp and metadata
+    projectData.lastUpdate = new Date();
+    if (message.projectId) {
+      projectData.metadata = {
+        ...projectData.metadata,
+        projectId: message.projectId,
+      };
+    }
+
+    console.log(
+      `\x1b[35m\x1b[1m[STORAGE]\x1b[0m \x1b[37mStored ${
+        message.type || "unknown"
+      } data for project ${projectId}\x1b[0m`
+    );
+  }
+
+  // Send stored data to newly connected frontend
+  private sendStoredDataToFrontend(ws: WebSocket, projectId: string) {
+    const storedData = this.projectData.get(projectId);
+    if (!storedData) {
+      console.log(
+        `\x1b[90m\x1b[1m[STORAGE]\x1b[0m \x1b[37mNo stored data for project ${projectId}\x1b[0m`
+      );
+      return;
+    }
+
+    // Send stored routes if available
+    if (storedData.routes) {
+      ws.send(
+        JSON.stringify({
+          type: "routes_update",
+          routes: storedData.routes,
+          projectId: projectId,
+          source: "relay",
+          fromStorage: true, // Flag to indicate this is from storage
+          lastUpdate: storedData.lastUpdate,
+        })
+      );
+      console.log(
+        `\x1b[35m\x1b[1m[STORAGE]\x1b[0m \x1b[37mSent stored routes to new frontend for project ${projectId}\x1b[0m`
+      );
+    }
+
+    // Send any other stored data types here if needed
   }
 
   private handleFrontendConnection(ws: WebSocket, projectId: string) {
@@ -158,9 +235,9 @@ class WebSocketRelay {
             })
           );
           console.log(
-            `📤 Frontend -> CLI: ${
+            `\x1b[33m\x1b[1m[RELAY]\x1b[0m \x1b[37mFrontend → CLI: ${
               message.type || "unknown"
-            } for project ${projectId}`
+            } for project ${projectId}\x1b[0m`
           );
         } else {
           // CLI not connected, send error back to frontend
@@ -173,7 +250,11 @@ class WebSocketRelay {
           );
         }
       } catch (error) {
-        console.error("Invalid JSON from frontend:", error);
+        console.log(
+          `\x1b[31m\x1b[1m[ERROR]\x1b[0m \x1b[37mInvalid JSON from frontend: ${
+            error instanceof Error ? error.message : String(error)
+          }\x1b[0m`
+        );
         ws.send(
           JSON.stringify({
             type: "error",
@@ -200,13 +281,14 @@ class WebSocketRelay {
         this.frontendConnections.set(projectId, updatedConnections);
       }
 
-      console.log(`❌ Frontend disconnected from project: ${projectId}`);
+      console.log(
+        `\x1b[31m\x1b[1m[DISCONNECT]\x1b[0m \x1b[37mFrontend disconnected from project: ${projectId}\x1b[0m`
+      );
     });
 
     ws.on("error", (error) => {
-      console.error(
-        `Frontend WebSocket error for project ${projectId}:`,
-        error
+      console.log(
+        `\x1b[31m\x1b[1m[ERROR]\x1b[0m \x1b[37mFrontend WebSocket error for project ${projectId}: ${error.message}\x1b[0m`
       );
     });
 
@@ -218,6 +300,9 @@ class WebSocketRelay {
         source: "relay",
       })
     );
+
+    // Send stored project data immediately if available
+    this.sendStoredDataToFrontend(ws, projectId);
   }
 
   private startHeartbeat() {
@@ -225,7 +310,9 @@ class WebSocketRelay {
       // Check CLI connections
       this.cliConnections.forEach((connection, projectId) => {
         if (!connection.isAlive) {
-          console.log(`💔 CLI heartbeat failed for project: ${projectId}`);
+          console.log(
+            `\x1b[91m\x1b[1m[HEARTBEAT]\x1b[0m \x1b[37mCLI heartbeat failed for project: ${projectId}\x1b[0m`
+          );
           connection.socket.terminate();
           this.cliConnections.delete(projectId);
           return;
@@ -242,7 +329,7 @@ class WebSocketRelay {
         const aliveConnections = connections.filter((connection) => {
           if (!connection.isAlive) {
             console.log(
-              `💔 Frontend heartbeat failed for project: ${projectId}`
+              `\x1b[91m\x1b[1m[HEARTBEAT]\x1b[0m \x1b[37mFrontend heartbeat failed for project: ${projectId}\x1b[0m`
             );
             connection.socket.terminate();
             return false;

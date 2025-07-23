@@ -67,7 +67,7 @@ program
 
     // Start the client
     await startZerobugClient(
-      updatedConfig.projectId, 
+      updatedConfig.projectId,
       updatedConfig.backendPort,
       relayUrl
     );

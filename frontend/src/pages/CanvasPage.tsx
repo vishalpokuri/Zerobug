@@ -85,8 +85,21 @@ function Canvas() {
 
   useEffect(() => {
     if (lastMessage) {
-      const newEndpoints = JSON.parse(lastMessage);
-      setEndpoints(newEndpoints);
+      try {
+        const message = JSON.parse(lastMessage);
+
+        // Handle different message types from the relay
+        if (message.type === "routes_update" && message.routes) {
+          console.log("📥 Received routes from CLI:", message.routes);
+          setEndpoints(message.routes);
+        } else if (message.type === "cli_connected") {
+          console.log("✅ CLI connected");
+        } else if (message.type === "cli_disconnected") {
+          console.log("❌ CLI disconnected");
+        }
+      } catch (error) {
+        console.error("Failed to parse WebSocket message:", error);
+      }
     }
   }, [lastMessage]);
 
