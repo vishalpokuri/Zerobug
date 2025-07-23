@@ -23,24 +23,9 @@ const app = express();
 const server = createServer(app);
 
 // ✅ Only allow production frontend
-// app.use(
-//   cors({
-//     origin: "https://app.zerobug.tech",
-//   })
-// );
-
-// // ✅ Handle preflight for all routes
-// app.options(
-//   "*",
-//   cors({
-//     origin: "https://app.zerobug.tech",
-//   })
-// );
-
-// ✅ Testing
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://app.zerobug.tech",
   })
 );
 
@@ -48,9 +33,24 @@ app.use(
 app.options(
   "*",
   cors({
-    origin: "http://localhost:5173",
+    origin: "https://app.zerobug.tech",
   })
 );
+
+// ✅ Testing
+// app.use(
+//   cors({
+//     origin: "http://localhost:5173",
+//   })
+// );
+
+// // ✅ Handle preflight for all routes
+// app.options(
+//   "*",
+//   cors({
+//     origin: "http://localhost:5173",
+//   })
+// );
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
@@ -60,7 +60,7 @@ app.use("/api/project", projectRoutes);
 const wsRelay = new WebSocketRelay(server);
 
 // Add stats endpoint for debugging
-app.get('/api/ws/stats', (req, res) => {
+app.get("/api/ws/stats", (req, res) => {
   res.json(wsRelay.getConnectionStats());
 });
 
