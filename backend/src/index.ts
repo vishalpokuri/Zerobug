@@ -22,10 +22,17 @@ const connectDB = async () => {
 const app = express();
 const server = createServer(app);
 
-// ✅ Only allow production frontend
+// ✅ Allow both development and production frontends
+const allowedOrigins = [
+  "https://app.zerobug.tech",
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://localhost:4173",
+];
+
 app.use(
   cors({
-    origin: "https://app.zerobug.tech",
+    origin: allowedOrigins,
   })
 );
 
@@ -33,7 +40,7 @@ app.use(
 app.options(
   "*",
   cors({
-    origin: "https://app.zerobug.tech",
+    origin: allowedOrigins,
   })
 );
 
@@ -60,7 +67,7 @@ app.use("/api/project", projectRoutes);
 const wsRelay = new WebSocketRelay(server);
 
 // Add stats endpoint for debugging
-app.get("/api/ws/stats", (req, res) => {
+app.get("/api/ws/stats", (_req, res) => {
   res.json(wsRelay.getConnectionStats());
 });
 
