@@ -32,8 +32,8 @@ class ZerobugClient {
   constructor(config: ClientConfig) {
     this.config = {
       ...config,
-      // relayUrl: "ws://localhost:3401/ws",
-      relayUrl: "wss://backend.canum.xyz/api3/ws",
+      relayUrl: "ws://localhost:3401/ws",
+      // relayUrl: "wss://backend.canum.xyz/api3/ws",
     };
   }
 

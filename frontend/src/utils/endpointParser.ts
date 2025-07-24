@@ -37,6 +37,8 @@ export interface FlowEdge {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: string;
+  targetHandle?: string;
   type?: string;
 }
 
@@ -51,8 +53,8 @@ export const mockEndpoints: ParsedEndpoint[] = [
     queryParamTypes: [],
     bodyParamTypes: [
       { name: "email", type: "string", required: true },
-      { name: "password", type: "string", required: true }
-    ]
+      { name: "password", type: "string", required: true },
+    ],
   },
   {
     method: "POST",
@@ -64,33 +66,29 @@ export const mockEndpoints: ParsedEndpoint[] = [
     bodyParamTypes: [
       { name: "email", type: "string", required: true },
       { name: "password", type: "string", required: true },
-      { name: "name", type: "string", required: true }
-    ]
+      { name: "name", type: "string", required: true },
+    ],
   },
   {
     method: "GET",
     url: "/api/user/profile/:id",
     headers: ["Authorization"],
     requestDataType: "params",
-    paramTypes: [
-      { name: "id", type: "number", required: true }
-    ],
+    paramTypes: [{ name: "id", type: "number", required: true }],
     queryParamTypes: [],
-    bodyParamTypes: []
+    bodyParamTypes: [],
   },
   {
     method: "PUT",
     url: "/api/user/profile/:id",
     headers: ["Authorization", "Content-Type"],
     requestDataType: "body",
-    paramTypes: [
-      { name: "id", type: "number", required: true }
-    ],
+    paramTypes: [{ name: "id", type: "number", required: true }],
     queryParamTypes: [],
     bodyParamTypes: [
       { name: "name", type: "string", required: false },
-      { name: "email", type: "string", required: false }
-    ]
+      { name: "email", type: "string", required: false },
+    ],
   },
   {
     method: "GET",
@@ -100,9 +98,9 @@ export const mockEndpoints: ParsedEndpoint[] = [
     paramTypes: [],
     queryParamTypes: [
       { name: "limit", type: "number", required: false },
-      { name: "offset", type: "number", required: false }
+      { name: "offset", type: "number", required: false },
     ],
-    bodyParamTypes: []
+    bodyParamTypes: [],
   },
   {
     method: "POST",
@@ -113,8 +111,8 @@ export const mockEndpoints: ParsedEndpoint[] = [
     queryParamTypes: [],
     bodyParamTypes: [
       { name: "title", type: "string", required: true },
-      { name: "description", type: "string", required: false }
-    ]
+      { name: "description", type: "string", required: false },
+    ],
   },
 ];
 
@@ -221,20 +219,73 @@ export function parseEndpointsToTree(
   return root;
 }
 
-export function treeToFlowNodes(tree: EndpointNode): {
+interface SpacingConfig {
+  horizontalMultiplier?: number;
+  verticalMultiplier?: number;
+  useSimpleNodeSize?: boolean;
+}
+
+export function treeToFlowNodes(
+  tree: EndpointNode,
+  _spacingConfig: SpacingConfig = {}
+): {
   nodes: FlowNode[];
   edges: FlowEdge[];
 } {
   const nodes: FlowNode[] = [];
   const edges: FlowEdge[] = [];
 
-  const levelSpacing = 500; // Horizontal spacing between levels
-  const nodeSpacing = 500; // Vertical spacing between nodes
+  // Simplified spacing for top-to-bottom layout
+  const getNodeDimensions = (nodeType: string) => {
+    if (nodeType === "buffer") {
+      return { width: 180, height: 120 }; // BufferNode dimensions
+    } else {
+      // CustomNode dimensions - use simple view for better spacing
+      return { width: 320, height: 220 }; // Simple view dimensions
+    }
+  };
+
+  const calculateSpacing = (node: EndpointNode, _level: number) => {
+    const nodeDimensions = getNodeDimensions(node.type);
+
+    // Compact spacing for top-to-bottom layout
+    const horizontalSpacing = nodeDimensions.width + 100; // Smaller horizontal gap for siblings
+    const verticalSpacing = nodeDimensions.height + 450; // Moderate vertical gap between levels
+
+    return {
+      horizontal: horizontalSpacing,
+      vertical: verticalSpacing,
+    };
+  };
+
+  // Calculate total width needed for all children (horizontal layout)
+  const calculateTreeWidth = (
+    node: EndpointNode,
+    level: number = 0
+  ): number => {
+    const nodeDimensions = getNodeDimensions(node.type);
+
+    if (node.children.length === 0) {
+      return nodeDimensions.width;
+    }
+
+    let totalChildWidth = 0;
+    node.children.forEach((child) => {
+      totalChildWidth += calculateTreeWidth(child, level + 1);
+    });
+
+    const spacing = calculateSpacing(node, level);
+    const spacingWidth = (node.children.length - 1) * spacing.horizontal;
+
+    // Return the maximum of: current node width, or total children width with spacing
+    return Math.max(nodeDimensions.width, totalChildWidth + spacingWidth);
+  };
 
   function processNode(
     node: EndpointNode,
     x: number,
     y: number,
+    level: number = 0,
     parentId?: string
   ): number {
     // Add the current node
@@ -262,26 +313,63 @@ export function treeToFlowNodes(tree: EndpointNode): {
         id: `${parentId}-${node.id}`,
         source: parentId,
         target: node.id,
+        sourceHandle: "bottom-source",
+        targetHandle: "top-target",
       });
     }
 
-    let currentY = y;
-    const childrenStartY = y - ((node.children.length - 1) * nodeSpacing) / 2;
+    // Calculate spacing for this level
+    const spacing = calculateSpacing(node, level);
 
-    // Process children
-    node.children.forEach((child, index) => {
-      const childY = childrenStartY + index * nodeSpacing;
-      const childX = x + levelSpacing;
-      currentY = Math.max(
-        currentY,
-        processNode(child, childX, childY, node.id)
-      );
+    // If no children, return current Y position
+    if (node.children.length === 0) {
+      return y;
+    }
+
+    // Calculate total width needed for all children
+    let totalChildrenWidth = 0;
+    node.children.forEach((child) => {
+      totalChildrenWidth += calculateTreeWidth(child, level + 1);
     });
 
-    return currentY;
+    // Add spacing between children
+    if (node.children.length > 1) {
+      totalChildrenWidth += (node.children.length - 1) * spacing.horizontal;
+    }
+
+    // Start position for children (centered horizontally under parent)
+    const childrenStartX = x - totalChildrenWidth / 2;
+
+    let currentChildX = childrenStartX;
+    let maxY = y;
+
+    // Process children with calculated positions (top-to-bottom layout)
+    node.children.forEach((child) => {
+      const childWidth = calculateTreeWidth(child, level + 1);
+      const childCenterX = currentChildX + childWidth / 2;
+      const childY = y + spacing.vertical; // Place child below parent
+
+      const processedY = processNode(
+        child,
+        childCenterX,
+        childY,
+        level + 1,
+        node.id
+      );
+      maxY = Math.max(maxY, processedY);
+
+      // Move to next child position (horizontally)
+      currentChildX += childWidth + spacing.horizontal;
+    });
+
+    return maxY;
   }
 
-  processNode(tree, 0, 0);
+  // Start tree from a centered position with some padding
+  const startX = 200; // Some padding from left edge
+  const startY = 100; // Some padding from top edge
+
+  processNode(tree, startX, startY, 0);
 
   return { nodes, edges };
 }

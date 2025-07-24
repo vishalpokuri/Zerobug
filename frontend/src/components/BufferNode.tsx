@@ -47,19 +47,18 @@ export function BufferNode({ data, selected }: NodeProps) {
         }}
       />
 
-      {/* Bidirectional Handles */}
+      {/* Bidirectional Handles - Top/Bottom for vertical flow */}
 
-      {/* Right Side - Bidirectional */}
-      {/* Just need source right, target left, cuz you aint editing them tho */}
+      {/* Bottom Handle - Source (outgoing connections) */}
       <Handle
         type="source"
-        position={Position.Right}
-        id="right-source"
+        position={Position.Bottom}
+        id="bottom-source"
         className="group relative"
         style={{
-          right: -8,
-          top: "50%",
-          transform: "translateY(-50%)",
+          bottom: -8,
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "16px",
           height: "16px",
           backgroundColor: "transparent",
@@ -71,15 +70,16 @@ export function BufferNode({ data, selected }: NodeProps) {
         <div className="w-2 h-2 bg-gray-400 border border-white rounded-full group-hover:bg-[#F98866] group-hover:scale-125 transition-all duration-200 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       </Handle>
 
+      {/* Top Handle - Target (incoming connections) */}
       <Handle
         type="target"
-        position={Position.Left}
-        id="left-target"
+        position={Position.Top}
+        id="top-target"
         className="group relative"
         style={{
-          left: -8,
-          top: "50%",
-          transform: "translateY(-50%)",
+          top: -8,
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "16px",
           height: "16px",
           backgroundColor: "transparent",

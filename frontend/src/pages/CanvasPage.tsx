@@ -106,8 +106,16 @@ function Canvas() {
   useEffect(() => {
     if (endpoints.length > 0) {
       const endpointTree = parseEndpointsToTree(endpoints);
+      
+      // Compact spacing configuration for top-to-bottom layout
+      const spacingConfig = {
+        horizontalMultiplier: 1.0, // Standard horizontal space
+        verticalMultiplier: 1.0,   // Standard vertical space  
+        useSimpleNodeSize: true    // Use simple view for compact layout
+      };
+      
       const { nodes: generatedNodes, edges: generatedEdges } =
-        treeToFlowNodes(endpointTree);
+        treeToFlowNodes(endpointTree, spacingConfig);
       setNodes(generatedNodes);
       setEdges(generatedEdges);
     }

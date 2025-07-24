@@ -75,18 +75,17 @@ export function CustomNode({ data, selected }: NodeProps) {
         />
       )}
 
-      {/* Bidirectional Handles - Each position has both source and target overlapped */}
-      {/* Just need source right, target left, cuz you aint editing them tho */}
-      {/* Right Side - Bidirectional */}
+      {/* Bidirectional Handles - Top/Bottom for vertical flow */}
+      {/* Bottom Handle - Source (outgoing connections) */}
       <Handle
         type="source"
-        position={Position.Right}
-        id="right-source"
+        position={Position.Bottom}
+        id="bottom-source"
         className="group relative"
         style={{
-          right: -12,
-          top: "50%",
-          transform: "translateY(-50%)",
+          bottom: -12,
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "24px",
           height: "24px",
           backgroundColor: "transparent",
@@ -98,17 +97,16 @@ export function CustomNode({ data, selected }: NodeProps) {
         <div className="w-3 h-3 bg-gray-400 border-2 border-white rounded-full group-hover:bg-[#F98866] group-hover:border-[#F98866] group-hover:scale-125 transition-all duration-200 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       </Handle>
 
-      {/* Left Side - Bidirectional */}
-
+      {/* Top Handle - Target (incoming connections) */}
       <Handle
         type="target"
-        position={Position.Left}
-        id="left-target"
+        position={Position.Top}
+        id="top-target"
         className="group relative"
         style={{
-          left: -12,
-          top: "50%",
-          transform: "translateY(-50%)",
+          top: -12,
+          left: "50%",
+          transform: "translateX(-50%)",
           width: "24px",
           height: "24px",
           backgroundColor: "transparent",
