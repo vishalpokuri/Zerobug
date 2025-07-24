@@ -69,8 +69,9 @@ export function useWebSocketConnection({
           wsRef.current = retryWs;
 
           retryWs.onopen = () => {
-            setStatus(ConnectionStatus.CONNECTED);
-            console.log("WebSocket connected to CLI application");
+            // When WebSocket connects, we're waiting for CLI to connect
+            setStatus(ConnectionStatus.WAITING_FOR_CLI);
+            console.log("WebSocket connected to relay server, waiting for CLI");
             return;
           };
 
@@ -81,8 +82,10 @@ export function useWebSocketConnection({
               const message = JSON.parse(event.data);
               if (message.type === 'cli_connected') {
                 setIsCliConnected(true);
+                setStatus(ConnectionStatus.CONNECTED);
               } else if (message.type === 'cli_disconnected') {
                 setIsCliConnected(false);
+                setStatus(ConnectionStatus.WAITING_FOR_CLI);
               }
             } catch (e) {
               // Ignore invalid JSON
@@ -140,8 +143,9 @@ export function useWebSocketConnection({
       wsRef.current = ws;
 
       ws.onopen = () => {
-        setStatus(ConnectionStatus.CONNECTED);
-        console.log("WebSocket connected to CLI application");
+        // When WebSocket connects, we're waiting for CLI to connect
+        setStatus(ConnectionStatus.WAITING_FOR_CLI);
+        console.log("WebSocket connected to relay server, waiting for CLI");
         return;
       };
 
@@ -152,8 +156,10 @@ export function useWebSocketConnection({
           const message = JSON.parse(event.data);
           if (message.type === 'cli_connected') {
             setIsCliConnected(true);
+            setStatus(ConnectionStatus.CONNECTED);
           } else if (message.type === 'cli_disconnected') {
             setIsCliConnected(false);
+            setStatus(ConnectionStatus.WAITING_FOR_CLI);
           }
         } catch (e) {
           // Ignore invalid JSON

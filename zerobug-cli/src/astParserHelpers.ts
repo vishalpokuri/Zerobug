@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import readline from "readline";
-import { execSync } from "child_process";
 import { Logger } from "./logger";
 
 /**
@@ -28,40 +27,79 @@ const FILENAME_PRIORITIES = [
 ];
 
 /**
- * Automatically detects backend entry file based on express usage.
- * Now excludes node_modules from search.
+ * Cross-platform file search function that replaces grep
  */
-export function findBackendFile(): string | null {
-  for (const pattern of EXPRESS_PATTERNS) {
+function searchFilesForPatterns(patterns: string[], extensions: string[]): string[] {
+  const results: string[] = [];
+  const projectRoot = getProjectRoot();
+  const excludeDirs = ['node_modules', 'dist', 'build', 'coverage', '.git'];
+
+  function searchDirectory(dir: string): void {
     try {
-      // Exclude node_modules from search
-      const result = execSync(
-        `grep -r "${pattern}" . --include="*.js" --include="*.ts" --include="*.mjs" --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=build --exclude-dir=coverage 2>/dev/null`,
-        { encoding: "utf-8" }
-      );
-
-      if (result.trim()) {
-        const lines = result.trim().split("\n");
-        const filePaths = lines
-          .map((line) => line.split(":")[0])
-          .filter(file => !file.includes('node_modules')); // Extra safety filter
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
         
-        const uniquePaths = Array.from(new Set(filePaths));
-
-        // Sort based on filename priority
-        for (const priority of FILENAME_PRIORITIES) {
-          const match = uniquePaths.find((file) => priority.test(file));
-          if (match) return path.resolve(match);
-        }
-
-        // Fallback: return first found file
-        if (uniquePaths.length > 0) {
-          return path.resolve(uniquePaths[0]);
+        if (entry.isDirectory()) {
+          // Skip excluded directories
+          if (!excludeDirs.includes(entry.name)) {
+            searchDirectory(fullPath);
+          }
+        } else if (entry.isFile()) {
+          // Check if file has valid extension
+          const ext = path.extname(entry.name);
+          if (extensions.includes(ext)) {
+            try {
+              const content = fs.readFileSync(fullPath, 'utf-8');
+              for (const pattern of patterns) {
+                if (content.includes(pattern)) {
+                  results.push(fullPath);
+                  break; // Found pattern, no need to check others for this file
+                }
+              }
+            } catch {
+              // Skip files that can't be read
+            }
+          }
         }
       }
     } catch {
-      continue; // Try next pattern
+      // Skip directories that can't be read
     }
+  }
+
+  searchDirectory(projectRoot);
+  return results;
+}
+
+/**
+ * Automatically detects backend entry file based on express usage.
+ * Cross-platform implementation that works on Windows and Unix.
+ */
+export function findBackendFile(): string | null {
+  try {
+    const extensions = ['.js', '.ts', '.mjs'];
+    const filePaths = searchFilesForPatterns(EXPRESS_PATTERNS, extensions);
+    
+    if (filePaths.length === 0) {
+      return null;
+    }
+
+    const uniquePaths = Array.from(new Set(filePaths));
+
+    // Sort based on filename priority
+    for (const priority of FILENAME_PRIORITIES) {
+      const match = uniquePaths.find((file) => priority.test(path.basename(file)));
+      if (match) return path.resolve(match);
+    }
+
+    // Fallback: return first found file
+    if (uniquePaths.length > 0) {
+      return path.resolve(uniquePaths[0]);
+    }
+  } catch (error) {
+    Logger.parsing(`Error during backend file search: ${error}`);
   }
 
   return null;

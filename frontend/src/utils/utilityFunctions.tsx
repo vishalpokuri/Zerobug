@@ -55,6 +55,8 @@ export const getStatusColorBG = (status: ConnectionStatus) => {
       return "bg-red-400";
     case ConnectionStatus.INSTANCE_ALREADY_RUNNING || "instance_already_running":
       return "bg-orange-400";
+    case ConnectionStatus.WAITING_FOR_CLI || "waiting_for_cli":
+      return "bg-blue-400";
     default:
       return "bg-gray-400";
   }
@@ -89,6 +91,8 @@ export const getStatusText = (status: ConnectionStatus) => {
       return "Failed to connect to CLI Application";
     case ConnectionStatus.INSTANCE_ALREADY_RUNNING:
       return "CLI Instance Already Running";
+    case ConnectionStatus.WAITING_FOR_CLI:
+      return "Waiting for CLI to Connect...";
     default:
       return "Disconnected from CLI Application";
   }

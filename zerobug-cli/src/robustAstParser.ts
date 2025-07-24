@@ -240,7 +240,11 @@ export class RobustExpressParser {
    * Check if file is in node_modules
    */
   private isNodeModulesFile(filePath: string): boolean {
-    return filePath.includes("node_modules");
+    // Use path.normalize to handle both Windows and Unix paths
+    const normalizedPath = path.normalize(filePath);
+    return normalizedPath.includes(`node_modules${path.sep}`) || 
+           normalizedPath.includes(`${path.sep}node_modules${path.sep}`) ||
+           normalizedPath.endsWith(`${path.sep}node_modules`);
   }
 
   /**
@@ -1340,9 +1344,10 @@ export class RobustExpressParser {
   }
 
   /**
-   * Combine two URL paths properly
+   * Combine two URL paths properly (always use forward slashes for URLs)
    */
   private combinePaths(prefix: string, path: string): string {
+    // Always use forward slashes for URL paths (even on Windows)
     // Remove trailing slash from prefix
     const cleanPrefix = prefix.endsWith("/") ? prefix.slice(0, -1) : prefix;
 

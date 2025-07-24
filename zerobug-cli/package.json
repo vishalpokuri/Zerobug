@@ -1,6 +1,6 @@
 {
   "name": "zerobug-cli",
-  "version": "2.2.1",
+  "version": "2.3.2",
   "description": "Zerobug CLI tool for connecting your frontend to local backend debugging",
   "author": "Vishal Pokuri",
   "main": "dist/program.js",

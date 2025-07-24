@@ -66,6 +66,17 @@ export function ResponseDisplay({ response, loading }: ResponseDisplayProps) {
             <div className="text-red-300 text-sm font-mono">
               {response.error}
             </div>
+            {response.error?.includes('ECONNREFUSED') && (
+              <div className="mt-3 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                  <span className="text-yellow-400 font-medium text-sm">Backend Not Running</span>
+                </div>
+                <div className="text-yellow-300 text-xs">
+                  Please start your backend server to test this endpoint.
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -16,7 +16,7 @@ export function ConnectionStatusIndicator({
 
   const shouldAnimate =
     status === ConnectionStatus.CONNECTING ||
-    status === ConnectionStatus.CONNECTED;
+    status === ConnectionStatus.WAITING_FOR_CLI;
 
   return (
     <button

@@ -32,8 +32,8 @@ class ZerobugClient {
   constructor(config: ClientConfig) {
     this.config = {
       ...config,
-      relayUrl: "ws://localhost:3401/ws",
-      // relayUrl: "wss://backend.canum.xyz/api3/ws",
+      // relayUrl: "ws://localhost:3401/ws",
+      relayUrl: "wss://backend.canum.xyz/api3/ws",
     };
   }
 
@@ -367,18 +367,28 @@ export async function startZerobugClient(
     relayUrl,
   });
 
-  // Handle graceful shutdown
+  // Handle graceful shutdown (cross-platform)
   process.on("SIGINT", () => {
     console.log("\n🛑 Received SIGINT, shutting down gracefully...");
     client.stop();
     process.exit(0);
   });
 
-  process.on("SIGTERM", () => {
-    console.log("\n🛑 Received SIGTERM, shutting down gracefully...");
-    client.stop();
-    process.exit(0);
-  });
+  // SIGTERM is not supported on Windows the same way, so only add it on non-Windows platforms
+  if (process.platform !== 'win32') {
+    process.on("SIGTERM", () => {
+      console.log("\n🛑 Received SIGTERM, shutting down gracefully...");
+      client.stop();
+      process.exit(0);
+    });
+  } else {
+    // On Windows, handle Ctrl+Break (SIGBREAK) if available
+    process.on("SIGBREAK", () => {
+      console.log("\n🛑 Received SIGBREAK, shutting down gracefully...");
+      client.stop();
+      process.exit(0);
+    });
+  }
 
   await client.start();
 }

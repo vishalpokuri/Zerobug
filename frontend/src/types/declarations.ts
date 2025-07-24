@@ -22,6 +22,7 @@ export const ConnectionStatus = {
   CONNECTED: "connected",
   ERROR: "error",
   INSTANCE_ALREADY_RUNNING: "instance_already_running",
+  WAITING_FOR_CLI: "waiting_for_cli",
 } as const;
 
 export type ConnectionStatus =
