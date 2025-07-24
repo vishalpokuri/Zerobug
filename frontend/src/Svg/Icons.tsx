@@ -376,3 +376,126 @@ export function PencilIcon({ className = "size-4" }: { className?: string }) {
     </svg>
   );
 }
+
+// Custom SVG Icons
+export const CliIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className="transition-colors"
+  >
+    <rect
+      x="2"
+      y="4"
+      width="20"
+      height="16"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill={connected ? "currentColor" : "none"}
+      fillOpacity={connected ? "0.2" : "0"}
+    />
+    <path
+      d="M6 10l2 2-2 2"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <line
+      x1="12"
+      y1="14"
+      x2="18"
+      y2="14"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+export const RelayIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`transition-colors ${
+      connected ? "text-green-500" : "text-gray-500"
+    }`}
+  >
+    <path
+      d="M11.86,2L11.34,3.93C15.75,4.78 19.2,8.23 20.05,12.65L22,12.13C20.95,7.03 16.96,3.04 11.86,2M10.82,5.86L10.3,7.81C13.34,8.27 15.72,10.65 16.18,13.68L18.12,13.16C17.46,9.44 14.55,6.5 10.82,5.86M3.72,9.69C3.25,10.73 3,11.86 3,13C3,14.95 3.71,16.82 5,18.28V22H8V20.41C8.95,20.8 9.97,21 11,21C12.14,21 13.27,20.75 14.3,20.28L3.72,9.69M9.79,9.76L9.26,11.72A3,3 0 0,1 12.26,14.72L14.23,14.2C14,11.86 12.13,10 9.79,9.76Z"
+      fill={connected ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={connected ? "0" : "1.5"}
+      fillOpacity={connected ? "1" : "0"}
+    />
+  </svg>
+);
+
+export const WebIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`transition-colors ${
+      connected ? "text-green-500" : "text-gray-500"
+    }`}
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill={connected ? "currentColor" : "none"}
+      fillOpacity={connected ? "0.1" : "0"}
+    />
+    <path d="M3 12h18" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 3s-3 4.5-3 9 3 9 3 9" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 3s3 4.5 3 9-3 9-3 9" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
+
+// Dotted line component
+export const DottedLine = ({ connected }: { connected: boolean }) => (
+  <svg width="40" height="2" viewBox="0 0 40 2" className="mx-4">
+    <line
+      x1="0"
+      y1="1"
+      x2="40"
+      y2="1"
+      stroke={connected ? "#10b981" : "#6b7280"}
+      strokeWidth="2"
+      strokeDasharray="3,3"
+      className="transition-colors"
+    />
+  </svg>
+);
+
+// Spinner component for loading state
+export const Spinner = () => (
+  <svg
+    className="animate-spin w-4 h-4 text-yellow-400"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    />
+  </svg>
+);

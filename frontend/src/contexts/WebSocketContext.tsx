@@ -14,6 +14,7 @@ interface WebSocketContextType {
   backendPort: string;
   setBackendPort: (port: string) => void;
   isCliConnected: boolean;
+  storedEndpoints: any[] | null;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(

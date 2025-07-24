@@ -13,6 +13,7 @@ interface UseWebSocketConnectionReturn {
   backendPort: string;
   setBackendPort: (port: string) => void;
   isCliConnected: boolean;
+  storedEndpoints: any[] | null;
 }
 
 interface useWSProps {
@@ -39,6 +40,7 @@ export function useWebSocketConnection({
   const [retryCount, setRetryCount] = useState<number>(0);
   const [backendPort, setBackendPort] = useState<string>("3000");
   const [isCliConnected, setIsCliConnected] = useState<boolean>(false);
+  const [storedEndpoints, setStoredEndpoints] = useState<any[] | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const isManualDisconnect = useRef<boolean>(false);
   const maxRetries = 3;
@@ -83,9 +85,17 @@ export function useWebSocketConnection({
               if (message.type === 'cli_connected') {
                 setIsCliConnected(true);
                 setStatus(ConnectionStatus.CONNECTED);
+                console.log("[WebSocket] CLI connected - ready to receive endpoints");
               } else if (message.type === 'cli_disconnected') {
                 setIsCliConnected(false);
                 setStatus(ConnectionStatus.WAITING_FOR_CLI);
+                // Clear stored endpoints when CLI disconnects
+                setStoredEndpoints(null);
+                console.log("[WebSocket] CLI disconnected - clearing stored endpoints");
+              } else if (message.type === 'routes_update' && message.routes) {
+                // Store endpoints in hook as backup
+                setStoredEndpoints(message.routes);
+                console.log(`[WebSocket] Stored ${message.routes.length} endpoints in hook as backup`);
               }
             } catch (e) {
               // Ignore invalid JSON
@@ -157,9 +167,17 @@ export function useWebSocketConnection({
           if (message.type === 'cli_connected') {
             setIsCliConnected(true);
             setStatus(ConnectionStatus.CONNECTED);
+            console.log("[WebSocket] CLI connected - ready to receive endpoints");
           } else if (message.type === 'cli_disconnected') {
             setIsCliConnected(false);
             setStatus(ConnectionStatus.WAITING_FOR_CLI);
+            // Clear stored endpoints when CLI disconnects
+            setStoredEndpoints(null);
+            console.log("[WebSocket] CLI disconnected - clearing stored endpoints");
+          } else if (message.type === 'routes_update' && message.routes) {
+            // Store endpoints in hook as backup
+            setStoredEndpoints(message.routes);
+            console.log(`[WebSocket] Stored ${message.routes.length} endpoints in hook as backup`);
           }
         } catch (e) {
           // Ignore invalid JSON
@@ -239,6 +257,7 @@ export function useWebSocketConnection({
     backendPort,
     setBackendPort,
     isCliConnected,
+    storedEndpoints,
   };
 }
 export { ConnectionStatus };

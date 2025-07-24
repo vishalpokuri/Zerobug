@@ -375,7 +375,7 @@ export async function startZerobugClient(
   });
 
   // SIGTERM is not supported on Windows the same way, so only add it on non-Windows platforms
-  if (process.platform !== 'win32') {
+  if (process.platform !== "win32") {
     process.on("SIGTERM", () => {
       console.log("\n🛑 Received SIGTERM, shutting down gracefully...");
       client.stop();

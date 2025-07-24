@@ -37,6 +37,8 @@ export const getStatusColorText = (status: ConnectionStatus) => {
       return "text-green-400";
     case ConnectionStatus.CONNECTING || "connecting":
       return "text-yellow-400";
+    case ConnectionStatus.WAITING_FOR_CLI || "waiting_for_cli":
+      return "text-blue-400";
     case ConnectionStatus.ERROR || "error":
       return "text-red-400";
     case ConnectionStatus.INSTANCE_ALREADY_RUNNING || "instance_already_running":
@@ -71,6 +73,10 @@ export const getStatusIcon = (status: ConnectionStatus) => {
     case ConnectionStatus.CONNECTING:
       return (
         <div className="w-4 h-4 bg-yellow-400 rounded-full animate-pulse" />
+      );
+    case ConnectionStatus.WAITING_FOR_CLI:
+      return (
+        <div className="w-4 h-4 bg-blue-400 rounded-full animate-pulse" />
       );
     case ConnectionStatus.ERROR:
       return <div className="w-4 h-4 bg-red-400 rounded-full" />;

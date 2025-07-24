@@ -60,7 +60,7 @@ function Canvas() {
     [setEdges]
   );
   const [showCLIModal, setShowCLIModal] = useState(true);
-  const { lastMessage, isConnected } = useWebSocketContext();
+  const { lastMessage, isConnected, storedEndpoints } = useWebSocketContext();
   const [endpoints, setEndpoints] = useState<ParsedEndpoint[]>([]);
 
   useEffect(() => {
@@ -90,18 +90,24 @@ function Canvas() {
 
         // Handle different message types from the relay
         if (message.type === "routes_update" && message.routes) {
-          console.log("📥 Received routes from CLI");
+          console.log("[CanvasPage] Received routes from CLI via lastMessage:", message.routes.length);
           setEndpoints(message.routes);
         } else if (message.type === "cli_connected") {
-          console.log("✅ CLI connected");
+          console.log("[CanvasPage] CLI connected - checking for stored endpoints");
+          // When CLI connects, check if we have stored endpoints as fallback
+          if (storedEndpoints && storedEndpoints.length > 0) {
+            console.log("[CanvasPage] Using stored endpoints as fallback:", storedEndpoints.length);
+            setEndpoints(storedEndpoints);
+          }
         } else if (message.type === "cli_disconnected") {
-          console.log("❌ CLI disconnected");
+          console.log("[CanvasPage] CLI disconnected - clearing endpoints");
+          setEndpoints([]);
         }
       } catch (error) {
         console.error("Failed to parse WebSocket message:", error);
       }
     }
-  }, [lastMessage]);
+  }, [lastMessage, storedEndpoints]);
 
   useEffect(() => {
     if (endpoints.length > 0) {
