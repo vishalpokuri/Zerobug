@@ -12,7 +12,7 @@ export function ConnectionStatusIndicator({
 }: ConnectionStatusIndicatorProps) {
   const { status } = useWebSocketContext();
 
-  console.log("Indicator status: ", status);
+  // console.log("Indicator status: ", status);
 
   const shouldAnimate =
     status === ConnectionStatus.CONNECTING ||

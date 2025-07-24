@@ -90,7 +90,7 @@ function Canvas() {
 
         // Handle different message types from the relay
         if (message.type === "routes_update" && message.routes) {
-          console.log("📥 Received routes from CLI:", message.routes);
+          console.log("📥 Received routes from CLI");
           setEndpoints(message.routes);
         } else if (message.type === "cli_connected") {
           console.log("✅ CLI connected");
