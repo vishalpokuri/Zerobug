@@ -75,6 +75,15 @@ class WebSocketRelay {
 
     this.cliConnections.set(projectId, cliConnection);
 
+    // Notify all frontends that CLI is connected
+    const connectedFrontends = this.frontendConnections.get(projectId) || [];
+    connectedFrontends.forEach((frontend) => {
+      this.msgFrontendConnections(frontend, {
+        type: "cli_connected",
+        source: "relay",
+      });
+    });
+
     // When a message is received from CLI
     ws.on("message", (data) => {
       try {
@@ -303,6 +312,13 @@ class WebSocketRelay {
 
     // Send stored project data immediately if available
     this.sendStoredDataToFrontend(ws, projectId);
+    
+    // Send current CLI connection status to newly connected frontend
+    const isCliConnected = this.cliConnections.has(projectId);
+    ws.send(JSON.stringify({
+      type: isCliConnected ? "cli_connected" : "cli_disconnected",
+      source: "relay",
+    }));
   }
 
   private startHeartbeat() {

@@ -13,6 +13,7 @@ interface WebSocketContextType {
   isConnected: boolean;
   backendPort: string;
   setBackendPort: (port: string) => void;
+  isCliConnected: boolean;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(

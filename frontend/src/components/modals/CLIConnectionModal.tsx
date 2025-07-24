@@ -28,7 +28,7 @@ const StatusCard = ({
 }: {
   icon: React.ReactNode;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   children?: React.ReactNode;
   variant?: "default" | "error" | "connecting" | "success" | "warning";
 }) => {
@@ -116,6 +116,220 @@ const ConnectingProgress = ({ retryCount }: { retryCount: number }) => {
   );
 };
 
+// Custom SVG Icons
+const CliIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className="transition-colors"
+  >
+    <rect
+      x="2"
+      y="4"
+      width="20"
+      height="16"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill={connected ? "currentColor" : "none"}
+      fillOpacity={connected ? "0.2" : "0"}
+    />
+    <path
+      d="M6 10l2 2-2 2"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <line
+      x1="12"
+      y1="14"
+      x2="18"
+      y2="14"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const RelayIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`transition-colors ${
+      connected ? "text-green-500" : "text-gray-500"
+    }`}
+  >
+    <path
+      d="M11.86,2L11.34,3.93C15.75,4.78 19.2,8.23 20.05,12.65L22,12.13C20.95,7.03 16.96,3.04 11.86,2M10.82,5.86L10.3,7.81C13.34,8.27 15.72,10.65 16.18,13.68L18.12,13.16C17.46,9.44 14.55,6.5 10.82,5.86M3.72,9.69C3.25,10.73 3,11.86 3,13C3,14.95 3.71,16.82 5,18.28V22H8V20.41C8.95,20.8 9.97,21 11,21C12.14,21 13.27,20.75 14.3,20.28L3.72,9.69M9.79,9.76L9.26,11.72A3,3 0 0,1 12.26,14.72L14.23,14.2C14,11.86 12.13,10 9.79,9.76Z"
+      fill={connected ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={connected ? "0" : "1.5"}
+      fillOpacity={connected ? "1" : "0"}
+    />
+  </svg>
+);
+
+const WebIcon = ({ connected }: { connected: boolean }) => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    className={`transition-colors ${
+      connected ? "text-green-500" : "text-gray-500"
+    }`}
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="9"
+      stroke="currentColor"
+      strokeWidth="2"
+      fill={connected ? "currentColor" : "none"}
+      fillOpacity={connected ? "0.1" : "0"}
+    />
+    <path d="M3 12h18" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 3s-3 4.5-3 9 3 9 3 9" stroke="currentColor" strokeWidth="2" />
+    <path d="M12 3s3 4.5 3 9-3 9-3 9" stroke="currentColor" strokeWidth="2" />
+  </svg>
+);
+
+// Dotted line component
+const DottedLine = ({ connected }: { connected: boolean }) => (
+  <svg width="40" height="2" viewBox="0 0 40 2" className="mx-4">
+    <line
+      x1="0"
+      y1="1"
+      x2="40"
+      y2="1"
+      stroke={connected ? "#10b981" : "#6b7280"}
+      strokeWidth="2"
+      strokeDasharray="3,3"
+      className="transition-colors"
+    />
+  </svg>
+);
+
+// Spinner component for loading state
+const Spinner = () => (
+  <svg
+    className="animate-spin w-4 h-4 text-yellow-400"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <circle
+      className="opacity-25"
+      cx="12"
+      cy="12"
+      r="10"
+      stroke="currentColor"
+      strokeWidth="4"
+    />
+    <path
+      className="opacity-75"
+      fill="currentColor"
+      d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+    />
+  </svg>
+);
+
+const ConnectionVisual = ({
+  isCliConnected,
+  isFrontendConnected,
+}: {
+  isCliConnected: boolean;
+  isFrontendConnected: boolean;
+}) => {
+  const isWaitingForCli = isFrontendConnected && !isCliConnected;
+
+  return (
+    <div className="bg-gray-800/30 rounded-lg p-8 mb-6">
+      <div className="flex items-center justify-center">
+        {/* CLI */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="p-2 bg-gray-800/50 rounded-lg">
+            <div
+              className={`${
+                isWaitingForCli
+                  ? "text-yellow-400 animate-pulse"
+                  : isCliConnected
+                  ? "text-green-500"
+                  : "text-gray-500"
+              }`}
+            >
+              <CliIcon connected={isCliConnected || isWaitingForCli} />
+            </div>
+          </div>
+          <span className="text-xs font-mono text-gray-400 font-semibold">
+            CLI
+          </span>
+        </div>
+
+        {/* CLI to Relay connection line */}
+        <DottedLine connected={isCliConnected} />
+
+        {/* Relay */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="p-2 bg-gray-800/50 rounded-lg">
+            <RelayIcon connected={isFrontendConnected} />
+          </div>
+          <span className="text-xs font-mono text-gray-400 font-semibold">
+            RELAY
+          </span>
+        </div>
+
+        {/* Relay to Frontend connection line */}
+        <DottedLine connected={isFrontendConnected} />
+
+        {/* Frontend */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="p-2 bg-gray-800/50 rounded-lg">
+            <WebIcon connected={isFrontendConnected} />
+          </div>
+          <span className="text-xs font-mono text-gray-400 font-semibold">
+            CLIENT
+          </span>
+        </div>
+      </div>
+
+      {/* Enhanced Status text with spinner */}
+      <div className="text-center mt-6">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          {isWaitingForCli && <Spinner />}
+          <span className="text-sm text-gray-300 font-medium">
+            {isFrontendConnected && isCliConnected
+              ? "🟢 Full Connection Established"
+              : isWaitingForCli
+              ? "⏳ Waiting for CLI to Connect"
+              : !isFrontendConnected
+              ? "🔴 Frontend Connection Failed"
+              : "🔴 Connection Failed"}
+          </span>
+        </div>
+
+        {/* Additional context */}
+        {isWaitingForCli && (
+          <p className="text-xs text-gray-500 mt-1">
+            Run the CLI command in your terminal to establish connection
+          </p>
+        )}
+
+        {isFrontendConnected && isCliConnected && (
+          <p className="text-xs text-green-400 mt-1">
+            ✓ Ready to debug your application
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const ActionButtons = ({
   primaryAction,
   secondaryAction,
@@ -162,6 +376,7 @@ export function CLIConnectionModal({
     retryCount,
     backendPort,
     setBackendPort,
+    isCliConnected,
   } = useWebSocketContext();
 
   const command = `zerobug sniff --id=${projectId} --backend=${backendPort}`;
@@ -310,9 +525,15 @@ export function CLIConnectionModal({
                   <StatusCard
                     variant="success"
                     icon={getStatusIcon(status)}
-                    title="CLI Connected"
-                    subtitle="Successfully connected to your CLI application"
-                  ></StatusCard>
+                    title="Connection Status"
+                  >
+                    <ConnectionVisual
+                      isCliConnected={isCliConnected}
+                      isFrontendConnected={
+                        status === ConnectionStatus.CONNECTED
+                      }
+                    />
+                  </StatusCard>
                 );
 
               default:

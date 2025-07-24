@@ -15,7 +15,7 @@ app.post("/api/auth/login", (req, res) => {
 });
 
 app.post("/api/auth/register", (req, res) => {
-  const { email, password, name, phoneNumber } = req.body;
+  const { email, password, name } = req.body;
   res.json({
     success: true,
     message: "User registered successfully",

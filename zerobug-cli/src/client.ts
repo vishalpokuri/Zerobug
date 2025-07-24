@@ -1,6 +1,11 @@
 import WebSocket from "ws";
-import { getBackendCode, getBackendFilePath } from "./astParserHelpers";
+import {
+  getBackendCode,
+  getBackendFilePath,
+  getProjectRoot,
+} from "./astParserHelpers";
 import { parseExpressRoutes } from "./astParser";
+import { parseExpressRoutesRobust } from "./robustAstParser";
 import chokidar, { FSWatcher } from "chokidar";
 import figlet from "figlet";
 import fetch from "node-fetch";
@@ -292,8 +297,11 @@ class ZerobugClient {
 
   private async parseAndSendRoutes() {
     try {
-      const backendCode = await getBackendCode();
-      const routes = parseExpressRoutes(backendCode);
+      // Use robust parser for project-wide analysis
+      const projectRoot = getProjectRoot();
+      Logger.parsing(`Starting robust analysis of project: ${projectRoot}`);
+
+      const routes = await parseExpressRoutesRobust(projectRoot);
 
       this.send({
         type: "routes_update",
@@ -303,7 +311,24 @@ class ZerobugClient {
 
       Logger.routes(`Sent ${routes.length || 0} routes to relay`);
     } catch (error) {
-      Logger.error(`Failed to parse routes: ${error}`);
+      Logger.error(`Failed to parse routes with robust parser: ${error}`);
+
+      // Fallback to old parser if robust fails
+      try {
+        Logger.parsing("Falling back to basic parser...");
+        const backendCode = await getBackendCode();
+        const routes = parseExpressRoutes(backendCode);
+
+        this.send({
+          type: "routes_update",
+          routes: routes,
+          projectId: this.config.projectId,
+        });
+
+        Logger.routes(`Sent ${routes.length || 0} routes to relay (fallback)`);
+      } catch (fallbackError) {
+        Logger.error(`Both parsers failed: ${fallbackError}`);
+      }
     }
   }
 

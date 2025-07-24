@@ -1,6 +1,6 @@
 {
   "name": "zerobug-cli",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Zerobug CLI tool for connecting your frontend to local backend debugging",
   "author": "Vishal Pokuri",
   "main": "dist/program.js",
@@ -21,7 +21,7 @@
     "zerobug": "dist/program.js"
   },
   "scripts": {
-    "build": "tsup src/astParser.ts src/program.ts",
+    "build": "tsup src/astParser.ts src/program.ts src/robustAstParser.ts",
     "dev": "tsup --watch",
     "start": "node dist/program.js"
   },

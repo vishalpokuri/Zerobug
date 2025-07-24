@@ -12,6 +12,7 @@ interface UseWebSocketConnectionReturn {
   isConnected: boolean;
   backendPort: string;
   setBackendPort: (port: string) => void;
+  isCliConnected: boolean;
 }
 
 interface useWSProps {
@@ -37,6 +38,7 @@ export function useWebSocketConnection({
   const [lastMessage, setLastMessage] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
   const [backendPort, setBackendPort] = useState<string>("3000");
+  const [isCliConnected, setIsCliConnected] = useState<boolean>(false);
   const wsRef = useRef<WebSocket | null>(null);
   const isManualDisconnect = useRef<boolean>(false);
   const maxRetries = 3;
@@ -74,6 +76,17 @@ export function useWebSocketConnection({
 
           retryWs.onmessage = (event) => {
             setLastMessage(event.data);
+            // Handle CLI status messages
+            try {
+              const message = JSON.parse(event.data);
+              if (message.type === 'cli_connected') {
+                setIsCliConnected(true);
+              } else if (message.type === 'cli_disconnected') {
+                setIsCliConnected(false);
+              }
+            } catch (e) {
+              // Ignore invalid JSON
+            }
           };
 
           retryWs.onclose = (retryEvent) => {
@@ -134,6 +147,17 @@ export function useWebSocketConnection({
 
       ws.onmessage = (event) => {
         setLastMessage(event.data);
+        // Handle CLI status messages
+        try {
+          const message = JSON.parse(event.data);
+          if (message.type === 'cli_connected') {
+            setIsCliConnected(true);
+          } else if (message.type === 'cli_disconnected') {
+            setIsCliConnected(false);
+          }
+        } catch (e) {
+          // Ignore invalid JSON
+        }
       };
 
       ws.onclose = (event) => {
@@ -208,6 +232,7 @@ export function useWebSocketConnection({
     isConnected: status === ConnectionStatus.CONNECTED,
     backendPort,
     setBackendPort,
+    isCliConnected,
   };
 }
 export { ConnectionStatus };
