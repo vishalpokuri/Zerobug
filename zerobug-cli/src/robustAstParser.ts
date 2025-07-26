@@ -242,9 +242,11 @@ export class RobustExpressParser {
   private isNodeModulesFile(filePath: string): boolean {
     // Use path.normalize to handle both Windows and Unix paths
     const normalizedPath = path.normalize(filePath);
-    return normalizedPath.includes(`node_modules${path.sep}`) || 
-           normalizedPath.includes(`${path.sep}node_modules${path.sep}`) ||
-           normalizedPath.endsWith(`${path.sep}node_modules`);
+    return (
+      normalizedPath.includes(`node_modules${path.sep}`) ||
+      normalizedPath.includes(`${path.sep}node_modules${path.sep}`) ||
+      normalizedPath.endsWith(`${path.sep}node_modules`)
+    );
   }
 
   /**
@@ -657,7 +659,6 @@ export class RobustExpressParser {
       return null;
     }
 
-
     // Extract URL
     const urlArg = args[0];
     let url = "";
@@ -675,11 +676,11 @@ export class RobustExpressParser {
     // Find handler function (last argument, skipping middleware)
     // The actual route handler is typically the last function argument
     let handlerFunction: t.Function | null = null;
-    
+
     // Start from the last argument and work backwards to find the route handler
     for (let i = args.length - 1; i >= 1; i--) {
       const arg = args[i];
-      
+
       if (t.isFunction(arg)) {
         // Found a function - this is likely the route handler
         handlerFunction = arg;
@@ -691,14 +692,14 @@ export class RobustExpressParser {
           handlerFunction = foundFunction;
           break;
         }
-        
+
         // Check if this is an imported function (cross-file handler)
         const importedHandler = this.findImportedHandler(arg.name, _analysis);
         if (importedHandler) {
           handlerFunction = importedHandler;
           break;
         }
-        
+
         // If it's an identifier but not a known function, it might be middleware
         // Continue looking for the actual handler
       }
@@ -1095,7 +1096,6 @@ export class RobustExpressParser {
    * Resolve cross-file references and apply route prefixes
    */
   private async resolveCrossFileReferences(): Promise<void> {
-
     // First, ensure all imported controller files are analyzed
     await this.analyzeImportedControllerFiles();
 
@@ -1158,27 +1158,30 @@ export class RobustExpressParser {
    */
   private async analyzeImportedControllerFiles(): Promise<void> {
     const importedFiles = new Set<string>();
-    
+
     // Collect all imported files from route files
     for (const [_filePath, analysis] of this.analysisCache) {
       for (const importInfo of analysis.imports) {
         // Skip non-relative imports (node_modules)
-        if (!importInfo.source.startsWith('.')) {
+        if (!importInfo.source.startsWith(".")) {
           continue;
         }
-        
-        const importedFilePath = this.resolveImportPath(importInfo.source, analysis.filePath);
+
+        const importedFilePath = this.resolveImportPath(
+          importInfo.source,
+          analysis.filePath
+        );
         if (importedFilePath && !this.analysisCache.has(importedFilePath)) {
           importedFiles.add(importedFilePath);
         }
       }
     }
-    
+
     // Analyze all missing imported files
-    const analysisPromises = Array.from(importedFiles).map(filePath => 
+    const analysisPromises = Array.from(importedFiles).map((filePath) =>
       this.analyzeFileRecursively(filePath)
     );
-    
+
     await Promise.all(analysisPromises);
   }
 
@@ -1188,12 +1191,15 @@ export class RobustExpressParser {
   private async analyzeImportedHandlers(): Promise<void> {
     for (const route of this.allRoutes) {
       for (const [_filePath, analysis] of this.analysisCache) {
-        const routeInAnalysis = analysis.routes.find(r => 
-          r.method === route.method && r.url === route.url
+        const routeInAnalysis = analysis.routes.find(
+          (r) => r.method === route.method && r.url === route.url
         );
-        
-        if (routeInAnalysis && routeInAnalysis.bodyParamTypes.length === 0 && 
-            routeInAnalysis.queryParamTypes.length === 0) {
+
+        if (
+          routeInAnalysis &&
+          routeInAnalysis.bodyParamTypes.length === 0 &&
+          routeInAnalysis.queryParamTypes.length === 0
+        ) {
           await this.enrichRouteWithImportedHandler(routeInAnalysis, analysis);
         }
       }
@@ -1203,22 +1209,33 @@ export class RobustExpressParser {
   /**
    * Enrich a route with parameter information from imported handler
    */
-  private async enrichRouteWithImportedHandler(route: EndpointData, analysis: FileAnalysis): Promise<void> {
+  private async enrichRouteWithImportedHandler(
+    route: EndpointData,
+    analysis: FileAnalysis
+  ): Promise<void> {
     traverse(analysis.ast, {
       CallExpression: (path) => {
-        const extractedRoute = this.extractRouteFromCallExpression(path, analysis);
-        if (extractedRoute && extractedRoute.method === route.method && 
-            extractedRoute.url === route.url) {
-          
+        const extractedRoute = this.extractRouteFromCallExpression(
+          path,
+          analysis
+        );
+        if (
+          extractedRoute &&
+          extractedRoute.method === route.method &&
+          extractedRoute.url === route.url
+        ) {
           const { node } = path;
           const args = node.arguments;
-          
+
           // Look for the handler argument (last function-like argument)
           for (let i = args.length - 1; i >= 1; i--) {
             const arg = args[i];
-            
+
             if (t.isIdentifier(arg)) {
-              const importedHandler = this.findImportedHandler(arg.name, analysis);
+              const importedHandler = this.findImportedHandler(
+                arg.name,
+                analysis
+              );
               if (importedHandler) {
                 this.analyzeRouteHandler(importedHandler, route, path);
                 return;
@@ -1226,36 +1243,43 @@ export class RobustExpressParser {
             }
           }
         }
-      }
+      },
     });
   }
-
 
   /**
    * Find an imported handler function in the imported file
    */
-  private findImportedHandler(handlerName: string, analysis: FileAnalysis): t.Function | null {
+  private findImportedHandler(
+    handlerName: string,
+    analysis: FileAnalysis
+  ): t.Function | null {
     // Find the import that brought in this handler
-    const importInfo = analysis.imports.find(imp => 
-      imp.importedNames.includes(handlerName) || imp.defaultImport === handlerName
+    const importInfo = analysis.imports.find(
+      (imp) =>
+        imp.importedNames.includes(handlerName) ||
+        imp.defaultImport === handlerName
     );
-    
+
     if (!importInfo) {
       return null;
     }
-    
+
     // Resolve the imported file path
-    const importedFilePath = this.resolveImportPath(importInfo.source, analysis.filePath);
+    const importedFilePath = this.resolveImportPath(
+      importInfo.source,
+      analysis.filePath
+    );
     if (!importedFilePath) {
       return null;
     }
-    
+
     // Get the analysis for the imported file
     const importedAnalysis = this.analysisCache.get(importedFilePath);
     if (!importedAnalysis) {
       return null;
     }
-    
+
     // Look for the handler function in the imported file
     if (importInfo.importedNames.includes(handlerName)) {
       // Named import - look in exports
@@ -1264,40 +1288,50 @@ export class RobustExpressParser {
       // Default import - look for default export
       return this.findDefaultExportFunction(importedAnalysis);
     }
-    
+
     return null;
   }
-  
+
   /**
    * Find an exported function by name
    */
-  private findExportedFunction(functionName: string, analysis: FileAnalysis): t.Function | null {
+  private findExportedFunction(
+    functionName: string,
+    analysis: FileAnalysis
+  ): t.Function | null {
     let foundFunction: t.Function | null = null;
-    
+
     traverse(analysis.ast, {
       AssignmentExpression: (path) => {
         const { node } = path;
-        
+
         // Check for exports.functionName = function or module.exports.functionName = function
-        if (t.isMemberExpression(node.left) && t.isIdentifier(node.left.property) && 
-            node.left.property.name === functionName) {
-          
+        if (
+          t.isMemberExpression(node.left) &&
+          t.isIdentifier(node.left.property) &&
+          node.left.property.name === functionName
+        ) {
           let isValidExport = false;
-          
+
           // Check for exports.functionName
-          if (t.isIdentifier(node.left.object) && node.left.object.name === 'exports') {
+          if (
+            t.isIdentifier(node.left.object) &&
+            node.left.object.name === "exports"
+          ) {
             isValidExport = true;
           }
-          
+
           // Check for module.exports.functionName
-          if (t.isMemberExpression(node.left.object) && 
-              t.isIdentifier(node.left.object.object) && 
-              node.left.object.object.name === 'module' &&
-              t.isIdentifier(node.left.object.property) && 
-              node.left.object.property.name === 'exports') {
+          if (
+            t.isMemberExpression(node.left.object) &&
+            t.isIdentifier(node.left.object.object) &&
+            node.left.object.object.name === "module" &&
+            t.isIdentifier(node.left.object.property) &&
+            node.left.object.property.name === "exports"
+          ) {
             isValidExport = true;
           }
-          
+
           if (isValidExport) {
             if (t.isFunction(node.right)) {
               foundFunction = node.right;
@@ -1307,39 +1341,40 @@ export class RobustExpressParser {
             }
           }
         }
-      }
+      },
     });
-    
+
     return foundFunction;
   }
-  
+
   /**
    * Find the default export function
    */
   private findDefaultExportFunction(analysis: FileAnalysis): t.Function | null {
     let foundFunction: t.Function | null = null;
-    
+
     traverse(analysis.ast, {
       AssignmentExpression: (path) => {
         const { node } = path;
-        
+
         // Check for module.exports = function
-        if (t.isMemberExpression(node.left) && 
-            t.isMemberExpression(node.left.object) &&
-            t.isIdentifier(node.left.object.object) && 
-            node.left.object.object.name === 'module' &&
-            t.isIdentifier(node.left.object.property) && 
-            node.left.object.property.name === 'exports') {
-          
+        if (
+          t.isMemberExpression(node.left) &&
+          t.isMemberExpression(node.left.object) &&
+          t.isIdentifier(node.left.object.object) &&
+          node.left.object.object.name === "module" &&
+          t.isIdentifier(node.left.object.property) &&
+          node.left.object.property.name === "exports"
+        ) {
           if (t.isFunction(node.right)) {
             foundFunction = node.right;
           } else if (t.isIdentifier(node.right)) {
             foundFunction = analysis.functions.get(node.right.name) || null;
           }
         }
-      }
+      },
     });
-    
+
     return foundFunction;
   }
 
@@ -1361,6 +1396,13 @@ export class RobustExpressParser {
 
     return cleanPrefix + cleanPath;
   }
+
+  /**
+   * Get all file paths that have been analyzed (for file watching)
+   */
+  public getAnalyzedFiles(): string[] {
+    return Array.from(this.analysisCache.keys());
+  }
 }
 
 /**
@@ -1371,4 +1413,16 @@ export async function parseExpressRoutesRobust(
 ): Promise<EndpointData[]> {
   const parser = new RobustExpressParser(projectRoot);
   return await parser.parseProject();
+}
+
+/**
+ * Parse routes and return both routes and analyzed files for watching
+ */
+export async function parseExpressRoutesRobustWithFiles(
+  projectRoot: string = process.cwd()
+): Promise<{ routes: EndpointData[]; analyzedFiles: string[] }> {
+  const parser = new RobustExpressParser(projectRoot);
+  const routes = await parser.parseProject();
+  const analyzedFiles = parser.getAnalyzedFiles();
+  return { routes, analyzedFiles };
 }

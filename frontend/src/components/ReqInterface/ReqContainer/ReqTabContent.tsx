@@ -68,9 +68,9 @@ function ReqTabContent({
             const paramType = getParameterType(item.key);
             const isRequired = paramType?.required;
             const isEndpointParam =
-              endpointData.paramTypes.some(p => p.name === item.key) ||
-              endpointData.queryParamTypes.some(p => p.name === item.key) ||
-              endpointData.bodyParamTypes.some(p => p.name === item.key) ||
+              endpointData.paramTypes.some((p) => p.name === item.key) ||
+              endpointData.queryParamTypes.some((p) => p.name === item.key) ||
+              endpointData.bodyParamTypes.some((p) => p.name === item.key) ||
               endpointData.headers.includes(item.key);
 
             return (
@@ -116,12 +116,12 @@ function ReqTabContent({
                     <span
                       className={`px-1.5 py-0.5 text-xs rounded ${
                         paramType?.type === "string"
-                          ? "bg-[#4caf50] text-white"
+                          ? "bg-[#065f46] text-[#a7f3d0] border border-[#047857]"
                           : paramType?.type === "number"
-                          ? "bg-[#2196f3] text-white"
+                          ? "bg-[#1e3a8a] text-[#bfdbfe] border border-[#2563eb]"
                           : paramType?.type === "boolean"
-                          ? "bg-[#ff9800] text-white"
-                          : "bg-[#666] text-[#ccc]"
+                          ? "bg-[#92400e] text-[#fed7aa] border border-[#d97706]"
+                          : "bg-[#374151] text-[#9ca3af] border border-[#4b5563]"
                       }`}
                     >
                       {paramType?.type || "any"}

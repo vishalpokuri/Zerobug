@@ -1,11 +1,10 @@
 import WebSocket from "ws";
 import {
   getBackendCode,
-  getBackendFilePath,
   getProjectRoot,
 } from "./astParserHelpers";
 import { parseExpressRoutes } from "./astParser";
-import { parseExpressRoutesRobust } from "./robustAstParser";
+import { parseExpressRoutesRobustWithFiles } from "./robustAstParser";
 import chokidar, { FSWatcher } from "chokidar";
 import figlet from "figlet";
 import fetch from "node-fetch";
@@ -28,6 +27,7 @@ class ZerobugClient {
   private retryCount = 0;
   private maxRetries = 5;
   private isShuttingDown = false;
+  private analyzedFiles: string[] = [];
 
   constructor(config: ClientConfig) {
     this.config = {
@@ -68,19 +68,45 @@ class ZerobugClient {
 
   private async startFileWatching() {
     try {
-      const filePath = await getBackendFilePath();
-      this.watcher = chokidar.watch(filePath, {
-        persistent: true,
-      });
-
-      this.watcher.on("change", () => {
-        Logger.watcher("File changed, reparsing routes");
-        this.parseAndSendRoutes();
-      });
-
-      Logger.watcher(`Watching: ${filePath}`);
+      // Get all analyzed files for comprehensive watching
+      await this.updateWatchedFiles();
     } catch (error) {
-      console.error("Error setting up file watcher:", error);
+      Logger.error(`Error setting up file watcher: ${error}`);
+    }
+  }
+
+  private async updateWatchedFiles() {
+    try {
+      // Parse routes and get all analyzed files
+      const result = await parseExpressRoutesRobustWithFiles(getProjectRoot());
+      this.analyzedFiles = result.analyzedFiles;
+
+      // Close existing watcher
+      if (this.watcher) {
+        this.watcher.close();
+      }
+
+      // Watch all analyzed files
+      if (this.analyzedFiles.length > 0) {
+        this.watcher = chokidar.watch(this.analyzedFiles, {
+          persistent: true,
+          ignoreInitial: true,
+        });
+
+        this.watcher.on("change", (filePath) => {
+          Logger.watcher(`File changed: ${filePath}, reparsing routes`);
+          this.parseAndSendRoutes();
+        });
+
+        Logger.watcher(`Watching ${this.analyzedFiles.length} files:`);
+        this.analyzedFiles.forEach(file => {
+          Logger.watcher(`  - ${file}`);
+        });
+      } else {
+        Logger.watcher("No files found to watch");
+      }
+    } catch (error) {
+      Logger.error(`Error updating watched files: ${error}`);
     }
   }
 
@@ -301,7 +327,15 @@ class ZerobugClient {
       const projectRoot = getProjectRoot();
       Logger.parsing(`Starting robust analysis of project: ${projectRoot}`);
 
-      const routes = await parseExpressRoutesRobust(projectRoot);
+      const result = await parseExpressRoutesRobustWithFiles(projectRoot);
+      const routes = result.routes;
+
+      // Update watched files if new files were analyzed
+      if (result.analyzedFiles.length !== this.analyzedFiles.length) {
+        Logger.watcher("New files detected, updating file watcher");
+        this.analyzedFiles = result.analyzedFiles;
+        await this.updateWatchedFiles();
+      }
 
       this.send({
         type: "routes_update",
